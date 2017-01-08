@@ -20,10 +20,14 @@ import sys
 from PyQt5 import QtWidgets
 from gui import Ui_MainWindow
 
+class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
+    def __init__(self):
+        super(MainWindow, self).__init__()
+
+        self.setupUi(self)
+
 app = QtWidgets.QApplication(sys.argv)
-window = QtWidgets.QMainWindow()
-ui = Ui_MainWindow()
-ui.setupUi(window)
+window = MainWindow()
 
 window.show()
 sys.exit(app.exec_())
