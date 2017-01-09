@@ -136,6 +136,9 @@
          <property name="text">
           <string>Quick Format</string>
          </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
         </widget>
        </item>
        <item>
@@ -144,6 +147,9 @@
           <widget class="QCheckBox" name="checkBox_bootmethod">
            <property name="text">
             <string>Create a bootable disk using</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
@@ -156,6 +162,9 @@
         <widget class="QCheckBox" name="checkBox_extlabel">
          <property name="text">
           <string>Create extended label and icon files</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
          </property>
         </widget>
        </item>

@@ -26,6 +26,22 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.setupUi(self)
 
+        self.comboBox_partscheme.insertItem(0, "MBR partition scheme for BIOS or UEFI")
+        self.comboBox_partscheme.insertItem(1, "MBR partition scheme for UEFI")
+        self.comboBox_partscheme.insertItem(2, "GPT partition scheme for UEFI")
+
+        self.comboBox_filesystem.insertItem(0, "FAT")
+        self.comboBox_filesystem.insertItem(1, "FAT32")
+        self.comboBox_filesystem.insertItem(2, "NTFS")
+        self.comboBox_filesystem.insertItem(3, "UDF")
+        self.comboBox_filesystem.insertItem(4, "exFAT")
+
+        self.comboBox_checkbadblocks.insertItem(0, "1 Pass")
+        self.comboBox_checkbadblocks.insertItem(1, "2 Passes")
+        self.comboBox_checkbadblocks.insertItem(2, "3 Passes")
+        self.comboBox_checkbadblocks.insertItem(3, "4 Passes")
+
+
 app = QtWidgets.QApplication(sys.argv)
 window = MainWindow()
 
