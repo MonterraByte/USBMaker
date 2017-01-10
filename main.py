@@ -19,6 +19,8 @@
 import sys
 from PyQt5 import QtWidgets
 from gui import Ui_MainWindow
+import usb_info
+
 
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def __init__(self):
@@ -40,6 +42,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.comboBox_checkbadblocks.insertItem(1, "2 Passes")
         self.comboBox_checkbadblocks.insertItem(2, "3 Passes")
         self.comboBox_checkbadblocks.insertItem(3, "4 Passes")
+
+        self.comboBox_device.addItems(usb_info.get_id_list())
 
 
 app = QtWidgets.QApplication(sys.argv)
