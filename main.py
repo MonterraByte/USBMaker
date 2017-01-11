@@ -43,7 +43,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.comboBox_checkbadblocks.insertItem(2, "3 Passes")
         self.comboBox_checkbadblocks.insertItem(3, "4 Passes")
 
-        self.comboBox_device.addItems(usb_info.get_id_list())
+        for device in usb_info.get_id_list():
+            self.comboBox_device.addItem('(' + str(round(usb_info.get_size(device)/1073741824, 1)) + 'GiB) ' + device)
 
 
 app = QtWidgets.QApplication(sys.argv)
