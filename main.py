@@ -28,6 +28,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.setupUi(self)
 
+        self.pushButton_close.clicked.connect(self.close)
+
         self.comboBox_partscheme.insertItem(0, "MBR partition scheme for BIOS or UEFI")
         self.comboBox_partscheme.insertItem(1, "MBR partition scheme for UEFI")
         self.comboBox_partscheme.insertItem(2, "GPT partition scheme for UEFI")
