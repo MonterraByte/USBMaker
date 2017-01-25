@@ -55,11 +55,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.comboBox_device.addItem('(' + str(round(usb_info.get_size(device)/1073741824, 1)) + 'GiB) ' + device)
 
     def update_gui(self):
-        if self.comboBox_filesystem.currentText() == 'exFAT' or self.comboBox_filesystem.currentText() == 'UDF':
-            self.checkBox_bootmethod.setCheckable(False)
-        else:
-            self.checkBox_bootmethod.setCheckable(True)
-
         bootmethod_current_index = self.comboBox_bootmethod.currentIndex()
         self.comboBox_bootmethod.clear()
         self.comboBox_bootmethod.insertItem(0, 'ISO Image')
@@ -75,6 +70,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.comboBox_bootmethod.setCurrentIndex(0)
         if bootmethod_current_index <= self.comboBox_bootmethod.count():
             self.comboBox_bootmethod.setCurrentIndex(bootmethod_current_index)
+
+        if self.comboBox_filesystem.currentText() == 'exFAT' or self.comboBox_filesystem.currentText() == 'UDF':
+            self.checkBox_bootmethod.setCheckable(False)
+            self.comboBox_bootmethod.clear()
+        else:
+            self.checkBox_bootmethod.setCheckable(True)
 
 
 app = QtWidgets.QApplication(sys.argv)
