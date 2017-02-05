@@ -15,12 +15,15 @@
 #   You should have received a copy of the GNU General Public License
 #   along with USBMaker.  If not, see <https://www.gnu.org/licenses/>.
 
-import os, re
+import os
+import re
 
 
 def get_id_list():
+    # The list of all storage devices is obtained from /dev/disk/by-id/
     devices = os.listdir('/dev/disk/by-id/')
 
+    # All partitions and non-usb storage devices are removed from the list.
     not_usb_list = []
     is_part_list = []
 
@@ -42,16 +45,21 @@ def get_id_list():
 
 
 def get_block_device_name(device_id):
-    return os.path.realpath('/dev/disk/by-id/' + os.readlink('/dev/disk/by-id/' + device_id))[5:]
+    # os.readlink returns a relative path (for example: ../../sda), so
+    # we just need to remove the ../../ part.
+    return os.readlink('/dev/disk/by-id/' + device_id)[6:]
 
 
 def get_size(device_id):
+    # /sys/block/*/size is read to get the number of sectors in the usb.
     size_file = open('/sys/block/' + get_block_device_name(device_id) + '/size', mode='r')
     sectors = int(size_file.read().rstrip())
     size_file.close()
 
+    # /sys/block/*/queue/logical_block_size is read to get the size of sectors in the usb.
     block_size_file = open('/sys/block/' + get_block_device_name(device_id) + '/queue/logical_block_size', mode='r')
     block_size = int(block_size_file.read().rstrip())
     block_size_file.close()
 
+    # The sector size is multiplied by the number of sectors to get the number of bytes.
     return sectors * block_size
