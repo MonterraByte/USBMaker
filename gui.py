@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'gui.ui'
 #
-# Created by: PyQt5 UI code generator 5.7
+# Created by: PyQt5 UI code generator 5.8
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -12,13 +12,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(363, 491)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(MainWindow.sizePolicy().hasHeightForWidth())
-        MainWindow.setSizePolicy(sizePolicy)
         MainWindow.setMinimumSize(QtCore.QSize(363, 491))
-        MainWindow.setMaximumSize(QtCore.QSize(363, 491))
         self.centralWidget = QtWidgets.QWidget(MainWindow)
         self.centralWidget.setObjectName("centralWidget")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.centralWidget)
@@ -90,6 +84,11 @@ class Ui_MainWindow(object):
         self.comboBox_bootmethod = QtWidgets.QComboBox(self.frame)
         self.comboBox_bootmethod.setObjectName("comboBox_bootmethod")
         self.horizontalLayout_3.addWidget(self.comboBox_bootmethod)
+        self.pushButton_filedialog = QtWidgets.QPushButton(self.frame)
+        self.pushButton_filedialog.setMaximumSize(QtCore.QSize(25, 16777215))
+        self.pushButton_filedialog.setFlat(False)
+        self.pushButton_filedialog.setObjectName("pushButton_filedialog")
+        self.horizontalLayout_3.addWidget(self.pushButton_filedialog)
         self.verticalLayout_3.addLayout(self.horizontalLayout_3)
         self.checkBox_extlabel = QtWidgets.QCheckBox(self.frame)
         self.checkBox_extlabel.setChecked(True)
@@ -158,6 +157,7 @@ class Ui_MainWindow(object):
         self.checkBox_checkbadblocks.setText(_translate("MainWindow", "Check device for bad blocks"))
         self.checkBox_quickformat.setText(_translate("MainWindow", "Quick Format"))
         self.checkBox_bootmethod.setText(_translate("MainWindow", "Create a bootable disk using"))
+        self.pushButton_filedialog.setText(_translate("MainWindow", "..."))
         self.checkBox_extlabel.setText(_translate("MainWindow", "Create extended label and icon files"))
         self.label_status.setText(_translate("MainWindow", "TextLabel"))
         self.pushButton_about.setText(_translate("MainWindow", "About..."))
