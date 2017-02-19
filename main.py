@@ -17,6 +17,7 @@
 #   along with USBMaker.  If not, see <https://www.gnu.org/licenses/>.
 
 import sys
+import os
 from PyQt5 import QtWidgets
 from gui import Ui_MainWindow
 import usb_info
@@ -31,6 +32,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # Here we set up the gui elements that aren't modified
         # elsewhere in the code.
         self.pushButton_close.clicked.connect(self.close)
+
+        # Here self.filename is initialized and the file dialog button
+        # is set to activate the get_file_name function when clicked.
+        self.filename = ''
+        self.pushButton_filedialog.clicked.connect(self.get_file_name)
 
         self.comboBox_checkbadblocks.insertItem(0, '1 Pass')
         self.comboBox_checkbadblocks.insertItem(1, '2 Passes')
@@ -131,6 +137,15 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.comboBox_filesystem.currentIndexChanged.connect(self.update_gui)
         self.comboBox_partscheme.currentIndexChanged.connect(self.update_gui)
         self.comboBox_bootmethod.currentIndexChanged.connect(self.update_gui)
+
+    def get_file_name(self):
+        # getOpenFileName returns a tuple with the file path and the filter,
+        # so to get only the file path we use [0].
+        # If the user selects the cancel button, a empty string ('') is
+        # written to self.filename.
+        self.filename = QtWidgets.QFileDialog.getOpenFileName(directory=os.path.expanduser('~'),
+                                                              filter='ISO Files (*.iso);;All Files (*)',
+                                                              initialFilter='ISO Files (*.iso)')[0]
 
 
 app = QtWidgets.QApplication(sys.argv)
