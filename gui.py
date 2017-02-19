@@ -86,7 +86,6 @@ class Ui_MainWindow(object):
         self.horizontalLayout_3.addWidget(self.comboBox_bootmethod)
         self.pushButton_filedialog = QtWidgets.QPushButton(self.frame)
         self.pushButton_filedialog.setMaximumSize(QtCore.QSize(25, 16777215))
-        self.pushButton_filedialog.setFlat(False)
         self.pushButton_filedialog.setObjectName("pushButton_filedialog")
         self.horizontalLayout_3.addWidget(self.pushButton_filedialog)
         self.verticalLayout_3.addLayout(self.horizontalLayout_3)
