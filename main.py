@@ -33,21 +33,33 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # elsewhere in the code.
         self.pushButton_close.clicked.connect(self.close)
 
-        # Here self.filename is initialized and the file dialog button
-        # is set to activate the get_file_name function when clicked.
-        self.filename = ''
-        self.pushButton_filedialog.clicked.connect(self.get_file_name)
+        self.comboBox_partscheme.insertItem(0, 'MBR partition scheme for BIOS or UEFI')
+        self.comboBox_partscheme.insertItem(1, 'MBR partition scheme for UEFI')
+        self.comboBox_partscheme.insertItem(2, 'GPT partition scheme for UEFI')
+
+        self.comboBox_filesystem.insertItem(0, 'FAT')
+        self.comboBox_filesystem.insertItem(1, 'FAT32')
+        self.comboBox_filesystem.insertItem(2, 'NTFS')
+        self.comboBox_filesystem.insertItem(3, 'UDF')
+        self.comboBox_filesystem.insertItem(4, 'exFAT')
 
         self.comboBox_checkbadblocks.insertItem(0, '1 Pass')
         self.comboBox_checkbadblocks.insertItem(1, '2 Passes')
         self.comboBox_checkbadblocks.insertItem(2, '3 Passes')
         self.comboBox_checkbadblocks.insertItem(3, '4 Passes')
 
+        # Here self.filename is initialized and the file dialog button
+        # is set to activate the get_file_name function when clicked.
+        self.filename = ''
+        self.pushButton_filedialog.clicked.connect(self.get_file_name)
+
         # Changes to these parts of the gui trigger the update_gui function
         # to update the gui according to the selected options.
         self.comboBox_filesystem.currentIndexChanged.connect(self.update_gui)
         self.comboBox_partscheme.currentIndexChanged.connect(self.update_gui)
         self.comboBox_bootmethod.currentIndexChanged.connect(self.update_gui)
+        self.checkBox_bootmethod.stateChanged.connect(self.update_gui)
+        self.checkBox_checkbadblocks.stateChanged.connect(self.update_gui)
 
         # update_gui is called to finish the initialization of the gui.
         self.update_gui()
@@ -66,41 +78,23 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.comboBox_partscheme.currentIndexChanged.disconnect()
         self.comboBox_bootmethod.currentIndexChanged.disconnect()
 
-        if self.comboBox_bootmethod.currentText() == "DD Image":
+        if self.comboBox_bootmethod.currentText() == "DD Image" and self.checkBox_bootmethod.isChecked():
             # Most of the gui is disabled if "DD Image" is selected.
-            self.comboBox_partscheme.clear()
-            self.comboBox_filesystem.clear()
-            self.comboBox_clustersize.clear()
-            self.lineEdit_label.setReadOnly(True)
-            self.lineEdit_label.clear()
-            self.checkBox_quickformat.setCheckable(False)
-            self.checkBox_quickformat.setChecked(False)
-            self.checkBox_extlabel.setCheckable(False)
-            self.checkBox_extlabel.setChecked(False)
+            self.comboBox_partscheme.setEnabled(False)
+            self.comboBox_filesystem.setEnabled(False)
+            self.comboBox_clustersize.setEnabled(False)
+            self.lineEdit_label.setEnabled(False)
+            self.checkBox_quickformat.setEnabled(False)
+            self.checkBox_extlabel.setEnabled(False)
         else:
-            # The current index for each comboBox is stored before
+            self.comboBox_partscheme.setEnabled(True)
+            self.comboBox_filesystem.setEnabled(True)
+            self.comboBox_clustersize.setEnabled(True)
+            self.lineEdit_label.setEnabled(True)
+            self.checkBox_quickformat.setEnabled(True)
+            self.checkBox_extlabel.setEnabled(True)
+            # The current index for the bootmethod comboBox is stored before
             # its update and restored afterwards.
-            partscheme_current_index = self.comboBox_partscheme.currentIndex()
-            if partscheme_current_index == -1:
-                # When update_ui is first executed (when the program is launched),
-                # all indexes are set to -1, so we need to manually set them to 0.
-                partscheme_current_index = 0
-            self.comboBox_partscheme.clear()
-            self.comboBox_partscheme.insertItem(0, 'MBR partition scheme for BIOS or UEFI')
-            self.comboBox_partscheme.insertItem(1, 'MBR partition scheme for UEFI')
-            self.comboBox_partscheme.insertItem(2, 'GPT partition scheme for UEFI')
-            self.comboBox_partscheme.setCurrentIndex(partscheme_current_index)
-
-            filesystem_current_index = self.comboBox_filesystem.currentIndex()
-            if filesystem_current_index == -1:
-                filesystem_current_index = 0
-            self.comboBox_filesystem.clear()
-            self.comboBox_filesystem.insertItem(0, 'FAT')
-            self.comboBox_filesystem.insertItem(1, 'FAT32')
-            self.comboBox_filesystem.insertItem(2, 'NTFS')
-            self.comboBox_filesystem.insertItem(3, 'UDF')
-            self.comboBox_filesystem.insertItem(4, 'exFAT')
-            self.comboBox_filesystem.setCurrentIndex(filesystem_current_index)
 
             bootmethod_current_index = self.comboBox_bootmethod.currentIndex()
             if bootmethod_current_index == -1:
@@ -124,14 +118,24 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
             if self.comboBox_filesystem.currentText() == 'exFAT' or self.comboBox_filesystem.currentText() == 'UDF':
                 # exFAT or UDF aren't bootable, so comboBox_bootmethod
-                # checkBox_bootmethod are cleared.
-                self.checkBox_bootmethod.setCheckable(False)
-                self.checkBox_bootmethod.setChecked(False)
-                self.comboBox_bootmethod.clear()
+                # checkBox_bootmethod are disabled.
+                self.checkBox_bootmethod.setEnabled(False)
+                self.comboBox_bootmethod.setEnabled(False)
             else:
-                # comboBox_bootmethod should be restored at this point,
-                # so it's only necessary to restore checkBox_bootmethod.
-                self.checkBox_bootmethod.setCheckable(True)
+                self.checkBox_bootmethod.setEnabled(True)
+                self.comboBox_bootmethod.setEnabled(True)
+
+        if not self.checkBox_bootmethod.isChecked():
+            self.comboBox_bootmethod.setEnabled(False)
+            self.pushButton_filedialog.setEnabled(False)
+        else:
+            self.comboBox_bootmethod.setEnabled(True)
+            self.pushButton_filedialog.setEnabled(True)
+
+        if not self.checkBox_checkbadblocks.isChecked():
+            self.comboBox_checkbadblocks.setEnabled(False)
+        else:
+            self.comboBox_checkbadblocks.setEnabled(True)
 
         # Here the trigger for update_ui is re-enabled.
         self.comboBox_filesystem.currentIndexChanged.connect(self.update_gui)
