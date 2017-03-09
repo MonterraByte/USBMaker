@@ -65,8 +65,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.update_gui()
 
         # The available usb devices are detected here.
-        for device in usb_info.get_id_list():
-            self.comboBox_device.addItem('(' + str(round(usb_info.get_size(device)/1073741824, 1)) + 'GiB) ' + device)
+        self.refresh_device_list()
+        # The refresh button is connected to the refresh_device_list function.
+        self.pushButton_refresh.clicked.connect(self.refresh_device_list)
 
     def update_gui(self):
         # This function is used to update/initialize the parts of the gui
@@ -141,6 +142,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.comboBox_filesystem.currentIndexChanged.connect(self.update_gui)
         self.comboBox_partscheme.currentIndexChanged.connect(self.update_gui)
         self.comboBox_bootmethod.currentIndexChanged.connect(self.update_gui)
+
+    def refresh_device_list(self):
+        self.comboBox_device.clear()
+        for device in usb_info.get_id_list():
+            self.comboBox_device.addItem('(' + str(round(usb_info.get_size(device)/1073741824, 1)) + 'GiB) ' + device)
 
     def get_file_name(self):
         # getOpenFileName returns a tuple with the file path and the filter,
