@@ -20,14 +20,14 @@ import subprocess
 
 def create_fat32_filesystem(partition, label=''):
     if label != '':
-        subprocess.run(['mkfs.fat', '-F32', '-n', label, '/dev/' + partition])
+        subprocess.run(['mkfs.fat', '-F32', '-n', label.upper(), '/dev/' + partition])
     else:
         subprocess.run(['mkfs.fat', '-F32', '/dev/' + partition])
 
 
 def create_fat16_filesystem(partition, label=''):
     if label != '':
-        subprocess.run(['mkfs.fat', '-F16', '-n', label, '/dev/' + partition])
+        subprocess.run(['mkfs.fat', '-F16', '-n', label.upper(), '/dev/' + partition])
     else:
         subprocess.run(['mkfs.fat', '-F16', '/dev/' + partition])
 
