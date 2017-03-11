@@ -48,3 +48,10 @@ def create_ntfs_filesystem(partition, label=''):
 
 def create_udf_filesystem(partition, label=''):
     subprocess.run(['mkfs.udf', '-l', '"' + label + '"', '"/dev/' + partition + '"'])
+
+
+def create_ext4_filesystem(partition, label=''):
+    if label != '':
+        subprocess.run(['mkfs.ext4', '-L', '"' + label + '"', '"/dev/' + partition + '"'])
+    else:
+        subprocess.run(['mkfs.ext4', '"/dev/' + partition + '"'])
