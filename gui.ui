@@ -144,16 +144,6 @@
         </layout>
        </item>
        <item>
-        <widget class="QCheckBox" name="checkBox_quickformat">
-         <property name="text">
-          <string>Quick Format</string>
-         </property>
-         <property name="checked">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
         <layout class="QHBoxLayout" name="horizontalLayout_3">
          <item>
           <widget class="QCheckBox" name="checkBox_bootmethod">
@@ -182,16 +172,6 @@
           </widget>
          </item>
         </layout>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="checkBox_extlabel">
-         <property name="text">
-          <string>Create extended label and icon files</string>
-         </property>
-         <property name="checked">
-          <bool>true</bool>
-         </property>
-        </widget>
        </item>
       </layout>
      </widget>

@@ -87,15 +87,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.comboBox_filesystem.setEnabled(False)
             self.comboBox_clustersize.setEnabled(False)
             self.lineEdit_label.setEnabled(False)
-            self.checkBox_quickformat.setEnabled(False)
-            self.checkBox_extlabel.setEnabled(False)
         else:
             self.comboBox_partscheme.setEnabled(True)
             self.comboBox_filesystem.setEnabled(True)
             self.comboBox_clustersize.setEnabled(True)
             self.lineEdit_label.setEnabled(True)
-            self.checkBox_quickformat.setEnabled(True)
-            self.checkBox_extlabel.setEnabled(True)
             # The current index for the bootmethod comboBox is stored before
             # its update and restored afterwards.
 
