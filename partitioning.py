@@ -28,3 +28,8 @@ def create_msdos_table(device):
 
 def create_partition(device, fs_type='ext2'):
     subprocess.run(['parted', '-s', '/dev/' + device, 'mkpart', 'primary', fs_type, '1MiB', '100%'])
+
+
+def partprobe():
+    # Informs the kernel of changes in the partition table.
+    subprocess.run(['partprobe'])
