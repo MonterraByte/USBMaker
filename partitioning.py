@@ -19,12 +19,12 @@ import subprocess
 
 
 def create_gpt_table(device):
-    subprocess.run(['parted', '-s', '"/dev/' + device + '"', 'mktable', 'gpt'])
+    subprocess.run(['parted', '-s', '/dev/' + device, 'mktable', 'gpt'])
 
 
 def create_msdos_table(device):
-    subprocess.run(['parted', '-s', '"/dev/' + device + '"', 'mktable', 'msdos'])
+    subprocess.run(['parted', '-s', '/dev/' + device, 'mktable', 'msdos'])
 
 
 def create_partition(device, fs_type='ext2'):
-    subprocess.run(['parted', '-s', '"/dev/' + device + '"', 'mkpart', 'primary', fs_type, '1MiB', '100%'])
+    subprocess.run(['parted', '-s', '/dev/' + device, 'mkpart', 'primary', fs_type, '1MiB', '100%'])

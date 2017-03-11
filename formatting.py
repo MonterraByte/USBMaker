@@ -20,45 +20,45 @@ import subprocess
 
 def create_fat32_filesystem(partition, label=''):
     if label != '':
-        subprocess.run(['mkfs.fat', '-F32', '-n', '"' + label + '"', '"/dev/' + partition + '"'])
+        subprocess.run(['mkfs.fat', '-F32', '-n', label, '/dev/' + partition])
     else:
-        subprocess.run(['mkfs.fat', '-F32', '"/dev/' + partition + '"'])
+        subprocess.run(['mkfs.fat', '-F32', '/dev/' + partition])
 
 
 def create_fat16_filesystem(partition, label=''):
     if label != '':
-        subprocess.run(['mkfs.fat', '-F16', '-n', '"' + label + '"', '"/dev/' + partition + '"'])
+        subprocess.run(['mkfs.fat', '-F16', '-n', label, '/dev/' + partition])
     else:
-        subprocess.run(['mkfs.fat', '-F16', '"/dev/' + partition + '"'])
+        subprocess.run(['mkfs.fat', '-F16', '/dev/' + partition])
 
 
 def create_exfat_filesystem(partition, label=''):
     if label != '':
-        subprocess.run(['mkfs.exfat', '-n', '"' + label[:15] + '"', '"/dev/' + partition + '"'])
+        subprocess.run(['mkfs.exfat', '-n', label[:15], '/dev/' + partition])
     else:
-        subprocess.run(['mkfs.exfat', '"/dev/' + partition + '"'])
+        subprocess.run(['mkfs.exfat', '/dev/' + partition])
 
 
 def create_ntfs_filesystem(partition, label=''):
     if label != '':
-        subprocess.run(['mkfs.ntfs', '-Q', '-L', '"' + label + '"', '"/dev/' + partition + '"'])
+        subprocess.run(['mkfs.ntfs', '-Q', '-L', label, '/dev/' + partition])
     else:
-        subprocess.run(['mkfs.ntfs', '-Q', '"/dev/' + partition + '"'])
+        subprocess.run(['mkfs.ntfs', '-Q', '/dev/' + partition])
 
 
 def create_udf_filesystem(partition, label=''):
-    subprocess.run(['mkfs.udf', '-l', '"' + label + '"', '"/dev/' + partition + '"'])
+    subprocess.run(['mkfs.udf', '-l', label, '/dev/' + partition])
 
 
 def create_ext4_filesystem(partition, label=''):
     if label != '':
-        subprocess.run(['mkfs.ext4', '-L', '"' + label + '"', '"/dev/' + partition + '"'])
+        subprocess.run(['mkfs.ext4', '-L', label, '/dev/' + partition])
     else:
-        subprocess.run(['mkfs.ext4', '"/dev/' + partition + '"'])
+        subprocess.run(['mkfs.ext4', '/dev/' + partition])
 
 
 def create_btrfs_filesystem(partition, label=''):
     if label != '':
-        subprocess.run(['mkfs.btrfs', '-L', '"' + label + '"', '"/dev/' + partition + '"'])
+        subprocess.run(['mkfs.btrfs', '-L', label, '/dev/' + partition])
     else:
-        subprocess.run(['mkfs.btrfs', '"/dev/' + partition + '"'])
+        subprocess.run(['mkfs.btrfs', '/dev/' + partition])
