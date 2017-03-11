@@ -37,8 +37,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.comboBox_partscheme.insertItem(1, 'MBR partition scheme for UEFI')
         self.comboBox_partscheme.insertItem(2, 'GPT partition scheme for UEFI')
 
-        self.comboBox_filesystem.insertItem(0, 'FAT')
-        self.comboBox_filesystem.insertItem(1, 'FAT32')
+        self.comboBox_filesystem.insertItem(0, 'FAT32')
+        self.comboBox_filesystem.insertItem(1, 'FAT16')
         self.comboBox_filesystem.insertItem(2, 'NTFS')
         self.comboBox_filesystem.insertItem(3, 'UDF')
         self.comboBox_filesystem.insertItem(4, 'exFAT')
