@@ -43,6 +43,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.comboBox_filesystem.insertItem(3, 'UDF')
         self.comboBox_filesystem.insertItem(4, 'exFAT')
         self.comboBox_filesystem.insertItem(5, 'ext4')
+        self.comboBox_filesystem.insertItem(6, 'Btrfs')
 
         self.comboBox_checkbadblocks.insertItem(0, '1 Pass')
         self.comboBox_checkbadblocks.insertItem(1, '2 Passes')

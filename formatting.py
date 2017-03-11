@@ -55,3 +55,10 @@ def create_ext4_filesystem(partition, label=''):
         subprocess.run(['mkfs.ext4', '-L', '"' + label + '"', '"/dev/' + partition + '"'])
     else:
         subprocess.run(['mkfs.ext4', '"/dev/' + partition + '"'])
+
+
+def create_btrfs_filesystem(partition, label=''):
+    if label != '':
+        subprocess.run(['mkfs.btrfs', '-L', '"' + label + '"', '"/dev/' + partition + '"'])
+    else:
+        subprocess.run(['mkfs.btrfs', '"/dev/' + partition + '"'])
