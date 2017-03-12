@@ -196,10 +196,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.label_status.setText('Creating the partition table...')
 
             # Partition the usb drive.
-            if partition_table == 'msdos':
-                partitioning.create_msdos_table(device)
-            else:
-                partitioning.create_gpt_table(device)
+            partitioning.create_partition_table(device, partition_table)
 
             self.progressBar.setValue(25)
             self.label_status.setText('Creating the partition...')
