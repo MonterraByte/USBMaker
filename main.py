@@ -153,7 +153,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.device_id_list = usb_info.get_id_list()
         self.comboBox_device.clear()
         for device in self.device_id_list:
-            self.comboBox_device.addItem('(' + str(round(usb_info.get_size(device)/1073741824, 1)) + 'GiB) ' + device)
+            self.comboBox_device.addItem('(' + str(round(usb_info.get_size(
+                usb_info.get_block_device_name(device))/1073741824, 1)) + 'GiB) ' + device)
 
     def get_file_name(self):
         # getOpenFileName returns a tuple with the file path and the filter,
@@ -204,7 +205,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             if filesystem == 'fat32':
                 partitioning.create_partition(device, 'fat32')
             elif filesystem == 'fat16':
-                if usb_info.get_size(device_id) > 4294967296:
+                if usb_info.get_size(device) > 4294967296:
                     partitioning.create_custom_sized_partition(device, '4096MiB', 'fat16')
                 else:
                     partitioning.create_partition(device, 'fat16')
