@@ -99,7 +99,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_3.addLayout(self.horizontalLayout_3)
         self.verticalLayout.addWidget(self.frame)
         self.progressBar = QtWidgets.QProgressBar(self.centralWidget)
-        self.progressBar.setProperty("value", 24)
+        self.progressBar.setProperty("value", 0)
         self.progressBar.setObjectName("progressBar")
         self.verticalLayout.addWidget(self.progressBar)
         self.frame_2 = QtWidgets.QFrame(self.centralWidget)
