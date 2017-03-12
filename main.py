@@ -21,6 +21,8 @@ import os
 from PyQt5 import QtWidgets
 from gui import Ui_MainWindow
 import usb_info
+import partitioning
+import formatting
 
 
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
@@ -50,6 +52,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.comboBox_checkbadblocks.insertItem(2, '3 Passes')
         self.comboBox_checkbadblocks.insertItem(3, '4 Passes')
 
+        # self.device_id_list is initialized here.
+        self.device_id_list = []
+
         # Here self.filename is initialized and the file dialog button
         # is set to activate the get_file_name function when clicked.
         self.filename = ''
@@ -70,6 +75,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.refresh_device_list()
         # The refresh button is connected to the refresh_device_list function.
         self.pushButton_refresh.clicked.connect(self.refresh_device_list)
+
+        # The start button is connected to the start function.
+        self.pushButton_start.clicked.connect(self.start)
 
     def update_gui(self):
         # This function is used to update/initialize the parts of the gui
@@ -142,8 +150,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.comboBox_bootmethod.currentIndexChanged.connect(self.update_gui)
 
     def refresh_device_list(self):
+        self.device_id_list = usb_info.get_id_list()
         self.comboBox_device.clear()
-        for device in usb_info.get_id_list():
+        for device in self.device_id_list:
             self.comboBox_device.addItem('(' + str(round(usb_info.get_size(device)/1073741824, 1)) + 'GiB) ' + device)
 
     def get_file_name(self):
@@ -154,6 +163,105 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.filename = QtWidgets.QFileDialog.getOpenFileName(directory=os.path.expanduser('~'),
                                                               filter='ISO Files (*.iso);;All Files (*)',
                                                               initialFilter='ISO Files (*.iso)')[0]
+
+    def start(self):
+        if self.comboBox_device.currentText() != '':
+            self.pushButton_start.setEnabled(False)
+            self.pushButton_refresh.setEnabled(False)
+            self.pushButton_filedialog.setEnabled(False)
+            self.pushButton_close.setEnabled(False)
+            self.comboBox_device.setEnabled(False)
+            self.comboBox_partscheme.setEnabled(False)
+            self.comboBox_filesystem.setEnabled(False)
+            self.comboBox_clustersize.setEnabled(False)
+            self.comboBox_checkbadblocks.setEnabled(False)
+            self.comboBox_bootmethod.setEnabled(False)
+            self.lineEdit_label.setEnabled(False)
+            self.checkBox_checkbadblocks.setEnabled(False)
+            self.checkBox_bootmethod.setEnabled(False)
+
+            self.progressBar.setValue(0)
+
+            # Collect selected options.
+            label = self.lineEdit_label.text()
+            device_id = self.device_id_list[self.comboBox_device.currentIndex()]
+            if self.comboBox_partscheme.currentIndex() == 0 or self.comboBox_partscheme.currentIndex() == 1:
+                partition_table = 'msdos'
+            else:
+                partition_table = 'gpt'
+            filesystem = self.comboBox_filesystem.currentText().lower()
+
+            device = usb_info.get_block_device_name(device_id)
+
+            self.label_status.setText('Creating the partition table...')
+
+            # Partition the usb drive.
+            if partition_table == 'msdos':
+                partitioning.create_msdos_table(device)
+            else:
+                partitioning.create_gpt_table(device)
+
+            self.progressBar.setValue(25)
+            self.label_status.setText('Creating the partition...')
+
+            if filesystem == 'fat32':
+                partitioning.create_partition(device, 'fat32')
+            elif filesystem == 'fat16':
+                partitioning.create_partition(device, 'fat16')
+            elif filesystem == 'ntfs':
+                partitioning.create_partition(device, 'ntfs')
+            elif filesystem == 'exfat':
+                # exFAT and NTFS share the same fs-type
+                partitioning.create_partition(device, 'ntfs')
+            elif filesystem == 'ext4':
+                partitioning.create_partition(device, 'ext4')
+            elif filesystem == 'btrfs':
+                partitioning.create_partition(device, 'btrfs')
+            else:
+                partitioning.create_partition(device)
+
+            self.progressBar.setValue(50)
+            self.label_status.setText('Creating the filesystem...')
+
+            # Create the filesystem.
+            if filesystem == 'fat32':
+                formatting.create_fat32_filesystem(device + '1', label)
+            elif filesystem == 'fat16':
+                formatting.create_fat16_filesystem(device + '1', label)
+            elif filesystem == 'ntfs':
+                formatting.create_ntfs_filesystem(device + '1', label)
+            elif filesystem == 'exfat':
+                formatting.create_exfat_filesystem(device + '1', label)
+            elif filesystem == 'ext4':
+                formatting.create_ext4_filesystem(device + '1', label)
+            elif filesystem == 'btrfs':
+                formatting.create_btrfs_filesystem(device + '1', label)
+            elif filesystem == 'udf':
+                formatting.create_udf_filesystem(device + '1', label)
+            else:
+                formatting.create_fat32_filesystem(device + '1', label)
+
+            # Inform the kernel of the partitioning change.
+            partitioning.partprobe()
+
+            self.progressBar.setValue(100)
+            self.label_status.setText('Completed.')
+
+            self.pushButton_start.setEnabled(True)
+            self.pushButton_refresh.setEnabled(True)
+            self.pushButton_filedialog.setEnabled(True)
+            self.pushButton_close.setEnabled(True)
+            self.comboBox_device.setEnabled(True)
+            self.comboBox_partscheme.setEnabled(True)
+            self.comboBox_filesystem.setEnabled(True)
+            self.comboBox_clustersize.setEnabled(True)
+            self.comboBox_checkbadblocks.setEnabled(True)
+            self.comboBox_bootmethod.setEnabled(True)
+            self.lineEdit_label.setEnabled(True)
+            self.checkBox_checkbadblocks.setEnabled(True)
+            self.checkBox_bootmethod.setEnabled(True)
+        else:
+            self.label_status.setText('Nope')
 
 
 app = QtWidgets.QApplication(sys.argv)
