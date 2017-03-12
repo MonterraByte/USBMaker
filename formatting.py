@@ -62,3 +62,20 @@ def create_btrfs_filesystem(partition, label=''):
         subprocess.run(['mkfs.btrfs', '-L', label, '/dev/' + partition])
     else:
         subprocess.run(['mkfs.btrfs', '/dev/' + partition])
+
+
+def create_filesystem(partition, filesystem, label=''):
+    if filesystem.lower() == 'fat32':
+        create_fat32_filesystem(partition, label)
+    elif filesystem.lower() == 'fat16':
+        create_fat16_filesystem(partition, label)
+    elif filesystem.lower() == 'ntfs':
+        create_ntfs_filesystem(partition, label)
+    elif filesystem.lower() == 'exfat':
+        create_exfat_filesystem(partition, label)
+    elif filesystem.lower() == 'ext4':
+        create_ext4_filesystem(partition, label)
+    elif filesystem.lower() == 'btrfs':
+        create_btrfs_filesystem(partition, label)
+    elif filesystem.lower() == 'udf':
+        create_udf_filesystem(partition, label)

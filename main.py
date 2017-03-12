@@ -208,22 +208,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.label_status.setText('Creating the filesystem...')
 
             # Create the filesystem.
-            if filesystem == 'fat32':
-                formatting.create_fat32_filesystem(device + '1', label)
-            elif filesystem == 'fat16':
-                formatting.create_fat16_filesystem(device + '1', label)
-            elif filesystem == 'ntfs':
-                formatting.create_ntfs_filesystem(device + '1', label)
-            elif filesystem == 'exfat':
-                formatting.create_exfat_filesystem(device + '1', label)
-            elif filesystem == 'ext4':
-                formatting.create_ext4_filesystem(device + '1', label)
-            elif filesystem == 'btrfs':
-                formatting.create_btrfs_filesystem(device + '1', label)
-            elif filesystem == 'udf':
-                formatting.create_udf_filesystem(device + '1', label)
-            else:
-                formatting.create_fat32_filesystem(device + '1', label)
+            formatting.create_filesystem(device + '1', filesystem, label)
 
             # Inform the kernel of the partitioning change.
             partitioning.partprobe()
