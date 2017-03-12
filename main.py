@@ -207,7 +207,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             if filesystem == 'fat32':
                 partitioning.create_partition(device, 'fat32')
             elif filesystem == 'fat16':
-                partitioning.create_partition(device, 'fat16')
+                if usb_info.get_size(device_id) > 4294967296:
+                    partitioning.create_custom_sized_partition(device, '4096MiB', 'fat16')
+                else:
+                    partitioning.create_partition(device, 'fat16')
             elif filesystem == 'ntfs':
                 partitioning.create_partition(device, 'ntfs')
             elif filesystem == 'exfat':
@@ -260,7 +263,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.lineEdit_label.setEnabled(True)
             self.checkBox_checkbadblocks.setEnabled(True)
             self.checkBox_bootmethod.setEnabled(True)
-            
+
             self.update_gui()
         else:
             self.label_status.setText('Nope')
