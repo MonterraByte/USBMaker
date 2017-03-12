@@ -16,6 +16,7 @@
 #   along with USBMaker.  If not, see <https://www.gnu.org/licenses/>.
 
 import subprocess
+import usb_info
 
 
 def create_partition_table(device, table):
@@ -31,6 +32,27 @@ def create_partition(device, fs_type='ext2'):
 
 def create_custom_sized_partition(device, size, fs_type='ext2'):
     subprocess.run(['parted', '-s', '/dev/' + device, 'mkpart', 'primary', fs_type, '1MiB', size])
+
+
+def create_partition_wrapper(device, fs_type):
+    if fs_type.lower() == 'fat32':
+        create_partition(device, 'fat32')
+    elif fs_type.lower() == 'fat16':
+        if usb_info.get_size(device) > 4294967296:
+            create_custom_sized_partition(device, '4096MiB', 'fat16')
+        else:
+            create_partition(device, 'fat16')
+    elif fs_type.lower() == 'ntfs':
+        create_partition(device, 'ntfs')
+    elif fs_type.lower() == 'exfat':
+        # exFAT and NTFS share the same fs-type
+        create_partition(device, 'ntfs')
+    elif fs_type.lower() == 'ext4':
+        create_partition(device, 'ext4')
+    elif fs_type.lower() == 'btrfs':
+        create_partition(device, 'btrfs')
+    else:
+        create_partition(device)
 
 
 def partprobe():

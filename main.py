@@ -202,24 +202,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.progressBar.setValue(25)
             self.label_status.setText('Creating the partition...')
 
-            if filesystem == 'fat32':
-                partitioning.create_partition(device, 'fat32')
-            elif filesystem == 'fat16':
-                if usb_info.get_size(device) > 4294967296:
-                    partitioning.create_custom_sized_partition(device, '4096MiB', 'fat16')
-                else:
-                    partitioning.create_partition(device, 'fat16')
-            elif filesystem == 'ntfs':
-                partitioning.create_partition(device, 'ntfs')
-            elif filesystem == 'exfat':
-                # exFAT and NTFS share the same fs-type
-                partitioning.create_partition(device, 'ntfs')
-            elif filesystem == 'ext4':
-                partitioning.create_partition(device, 'ext4')
-            elif filesystem == 'btrfs':
-                partitioning.create_partition(device, 'btrfs')
-            else:
-                partitioning.create_partition(device)
+            partitioning.create_partition_wrapper(device, filesystem)
 
             self.progressBar.setValue(50)
             self.label_status.setText('Creating the filesystem...')
