@@ -260,6 +260,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.lineEdit_label.setEnabled(True)
             self.checkBox_checkbadblocks.setEnabled(True)
             self.checkBox_bootmethod.setEnabled(True)
+            
+            self.update_gui()
         else:
             self.label_status.setText('Nope')
 
