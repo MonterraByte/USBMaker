@@ -149,6 +149,38 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.comboBox_partscheme.currentIndexChanged.connect(self.update_gui)
         self.comboBox_bootmethod.currentIndexChanged.connect(self.update_gui)
 
+    def disable_gui(self):
+        self.pushButton_start.setEnabled(False)
+        self.pushButton_refresh.setEnabled(False)
+        self.pushButton_filedialog.setEnabled(False)
+        self.pushButton_close.setEnabled(False)
+        self.comboBox_device.setEnabled(False)
+        self.comboBox_partscheme.setEnabled(False)
+        self.comboBox_filesystem.setEnabled(False)
+        self.comboBox_clustersize.setEnabled(False)
+        self.comboBox_checkbadblocks.setEnabled(False)
+        self.comboBox_bootmethod.setEnabled(False)
+        self.lineEdit_label.setEnabled(False)
+        self.checkBox_checkbadblocks.setEnabled(False)
+        self.checkBox_bootmethod.setEnabled(False)
+
+    def enable_gui(self):
+        self.pushButton_start.setEnabled(True)
+        self.pushButton_refresh.setEnabled(True)
+        self.pushButton_filedialog.setEnabled(True)
+        self.pushButton_close.setEnabled(True)
+        self.comboBox_device.setEnabled(True)
+        self.comboBox_partscheme.setEnabled(True)
+        self.comboBox_filesystem.setEnabled(True)
+        self.comboBox_clustersize.setEnabled(True)
+        self.comboBox_checkbadblocks.setEnabled(True)
+        self.comboBox_bootmethod.setEnabled(True)
+        self.lineEdit_label.setEnabled(True)
+        self.checkBox_checkbadblocks.setEnabled(True)
+        self.checkBox_bootmethod.setEnabled(True)
+
+        self.update_gui()
+
     def refresh_device_list(self):
         self.device_id_list = usb_info.get_id_list()
         self.comboBox_device.clear()
@@ -167,19 +199,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def start(self):
         if self.comboBox_device.currentText() != '':
-            self.pushButton_start.setEnabled(False)
-            self.pushButton_refresh.setEnabled(False)
-            self.pushButton_filedialog.setEnabled(False)
-            self.pushButton_close.setEnabled(False)
-            self.comboBox_device.setEnabled(False)
-            self.comboBox_partscheme.setEnabled(False)
-            self.comboBox_filesystem.setEnabled(False)
-            self.comboBox_clustersize.setEnabled(False)
-            self.comboBox_checkbadblocks.setEnabled(False)
-            self.comboBox_bootmethod.setEnabled(False)
-            self.lineEdit_label.setEnabled(False)
-            self.checkBox_checkbadblocks.setEnabled(False)
-            self.checkBox_bootmethod.setEnabled(False)
+            self.disable_gui()
 
             self.progressBar.setValue(0)
 
@@ -216,21 +236,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.progressBar.setValue(100)
             self.label_status.setText('Completed.')
 
-            self.pushButton_start.setEnabled(True)
-            self.pushButton_refresh.setEnabled(True)
-            self.pushButton_filedialog.setEnabled(True)
-            self.pushButton_close.setEnabled(True)
-            self.comboBox_device.setEnabled(True)
-            self.comboBox_partscheme.setEnabled(True)
-            self.comboBox_filesystem.setEnabled(True)
-            self.comboBox_clustersize.setEnabled(True)
-            self.comboBox_checkbadblocks.setEnabled(True)
-            self.comboBox_bootmethod.setEnabled(True)
-            self.lineEdit_label.setEnabled(True)
-            self.checkBox_checkbadblocks.setEnabled(True)
-            self.checkBox_bootmethod.setEnabled(True)
-
-            self.update_gui()
+            self.enable_gui()
         else:
             self.label_status.setText('Nope')
 
