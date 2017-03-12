@@ -30,6 +30,10 @@ def create_partition(device, fs_type='ext2'):
     subprocess.run(['parted', '-s', '/dev/' + device, 'mkpart', 'primary', fs_type, '1MiB', '100%'])
 
 
+def create_custom_sized_partition(device, size, fs_type='ext2'):
+    subprocess.run(['parted', '-s', '/dev/' + device, 'mkpart', 'primary', fs_type, '1MiB', size])
+
+
 def partprobe():
     # Informs the kernel of changes in the partition table.
     subprocess.run(['partprobe'])
