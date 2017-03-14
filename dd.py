@@ -21,11 +21,11 @@ import os
 
 
 def dd(iso, device):
-    subprocess.run(['dd', 'if="' + iso + '"', 'of="/dev/' + device + '"'])
+    subprocess.run(['dd', 'if=' + iso, 'of=/dev/' + device])
 
 
 def dd_check(iso, device):
-    subprocess.run(['dd', 'if="/dev/' + device + '"', 'of="/tmp/usbmaker_image_' + device + '.iso"',
+    subprocess.run(['dd', 'if=/dev/' + device, 'of=/tmp/usbmaker_image_' + device + '.iso',
                     'count=' + str(os.path.getsize(iso)/512)])
     dd_hash = hashlib.sha512()
     dd_iso = open('/tmp/usbmaker_image_' + device + '.iso', 'rb')
