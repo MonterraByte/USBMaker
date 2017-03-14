@@ -23,6 +23,7 @@ from gui import Ui_MainWindow
 import usb_info
 import partitioning
 import formatting
+import dd
 
 
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
@@ -199,46 +200,71 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def start(self):
         if self.comboBox_device.currentText() != '':
-            self.disable_gui()
+            if self.checkBox_bootmethod.isChecked():
+                if self.filename != '':
+                    if self.comboBox_bootmethod.currentText() == 'DD Image':
+                        self.disable_gui()
 
-            self.progressBar.setValue(0)
+                        self.progressBar.setValue(0)
 
-            # Collect selected options.
-            label = self.lineEdit_label.text()
-            device_id = self.device_id_list[self.comboBox_device.currentIndex()]
-            if self.comboBox_partscheme.currentIndex() == 0 or self.comboBox_partscheme.currentIndex() == 1:
-                partition_table = 'msdos'
+                        # Collect information
+                        device_id = self.device_id_list[self.comboBox_device.currentIndex()]
+                        device = usb_info.get_block_device_name(device_id)
+
+                        # Write image to usb
+                        self.label_status.setText('Writing image...')
+                        dd.dd(self.filename, device)
+
+                        # Notify the kernel
+                        partitioning.partprobe()
+
+                        self.progressBar.setValue(100)
+                        self.label_status.setText('Completed.')
+
+                        self.enable_gui()
+                else:
+                    self.label_status.setText('Error: No file selected.')
             else:
-                partition_table = 'gpt'
-            filesystem = self.comboBox_filesystem.currentText().lower()
+                self.disable_gui()
 
-            device = usb_info.get_block_device_name(device_id)
+                self.progressBar.setValue(0)
 
-            self.label_status.setText('Creating the partition table...')
+                # Collect selected options.
+                label = self.lineEdit_label.text()
+                device_id = self.device_id_list[self.comboBox_device.currentIndex()]
+                if self.comboBox_partscheme.currentIndex() == 0 or self.comboBox_partscheme.currentIndex() == 1:
+                    partition_table = 'msdos'
+                else:
+                    partition_table = 'gpt'
+                filesystem = self.comboBox_filesystem.currentText().lower()
 
-            # Partition the usb drive.
-            partitioning.create_partition_table(device, partition_table)
+                device = usb_info.get_block_device_name(device_id)
 
-            self.progressBar.setValue(25)
-            self.label_status.setText('Creating the partition...')
+                self.label_status.setText('Creating the partition table...')
 
-            partitioning.create_partition_wrapper(device, filesystem)
+                # Partition the usb drive.
+                partitioning.create_partition_table(device, partition_table)
 
-            self.progressBar.setValue(50)
-            self.label_status.setText('Creating the filesystem...')
+                self.progressBar.setValue(25)
+                self.label_status.setText('Creating the partition...')
 
-            # Create the filesystem.
-            formatting.create_filesystem(device + '1', filesystem, label)
+                partitioning.create_partition_wrapper(device, filesystem)
 
-            # Inform the kernel of the partitioning change.
-            partitioning.partprobe()
+                self.progressBar.setValue(50)
+                self.label_status.setText('Creating the filesystem...')
 
-            self.progressBar.setValue(100)
-            self.label_status.setText('Completed.')
+                # Create the filesystem.
+                formatting.create_filesystem(device + '1', filesystem, label)
 
-            self.enable_gui()
+                # Inform the kernel of the partitioning change.
+                partitioning.partprobe()
+
+                self.progressBar.setValue(100)
+                self.label_status.setText('Completed.')
+
+                self.enable_gui()
         else:
-            self.label_status.setText('Nope')
+            self.label_status.setText('Error: no device selected.')
 
 
 app = QtWidgets.QApplication(sys.argv)
