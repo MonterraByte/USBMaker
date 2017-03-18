@@ -55,6 +55,10 @@ def create_partition_wrapper(device, fs_type):
         create_partition(device)
 
 
+def mark_bootable(device):
+    subprocess.run(['parted', '-s', '/dev/' + device, 'set', '1', 'boot', 'on'])
+
+
 def partprobe():
     # Informs the kernel of changes in the partition table.
     subprocess.run(['partprobe'])

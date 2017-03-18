@@ -24,6 +24,8 @@ import usb_info
 import partitioning
 import formatting
 import dd
+import mount
+import iso
 
 
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
@@ -52,6 +54,17 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.comboBox_checkbadblocks.insertItem(1, '2 Passes')
         self.comboBox_checkbadblocks.insertItem(2, '3 Passes')
         self.comboBox_checkbadblocks.insertItem(3, '4 Passes')
+
+        # Get the PID for this process
+        self.pid = os.getpid()
+
+        # Find syslinux
+        if os.path.exists('/usr/lib/syslinux/bios/mbr.bin'):
+            self.syslinux_mbr = '/usr/lib/syslinux/bios/mbr.bin'
+        elif os.path.exists('/usr/lib/syslinux/mbr/mbr.bin'):
+            self.syslinux_mbr = '/usr/lib/syslinux/mbr/mbr.bin'
+        elif os.path.exists('/usr/share/syslinux/mbr.bin'):
+            self.syslinux_mbr = '/usr/share/syslinux/mbr.bin'
 
         # self.device_id_list is initialized here.
         self.device_id_list = []
@@ -220,6 +233,76 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
                         self.progressBar.setValue(100)
                         self.label_status.setText('Completed.')
+
+                        self.enable_gui()
+                    elif self.comboBox_bootmethod.currentText() == 'ISO Image':
+                        self.disable_gui()
+
+                        self.progressBar.setValue(0)
+
+                        # Collect selected options.
+                        label = self.lineEdit_label.text()
+                        device_id = self.device_id_list[self.comboBox_device.currentIndex()]
+                        if self.comboBox_partscheme.currentIndex() == 0 or self.comboBox_partscheme.currentIndex() == 1:
+                            partition_table = 'msdos'
+                        else:
+                            partition_table = 'gpt'
+                        filesystem = self.comboBox_filesystem.currentText().lower()
+
+                        device = usb_info.get_block_device_name(device_id)
+
+                        self.label_status.setText('Creating the partition table...')
+
+                        # Partition the usb drive.
+                        partitioning.create_partition_table(device, partition_table)
+
+                        self.label_status.setText('Creating the partition...')
+                        self.progressBar.setValue(5)
+
+                        partitioning.create_partition_wrapper(device, filesystem)
+
+                        self.label_status.setText('Creating the filesystem...')
+                        self.progressBar.setValue(10)
+
+                        # Create the filesystem.
+                        formatting.create_filesystem(device + '1', filesystem, label)
+
+                        # Inform the kernel of the partitioning change.
+                        partitioning.partprobe()
+
+                        self.label_status.setText('Copying files...')
+                        self.progressBar.setValue(25)
+
+                        # Mount the usb and the iso file.
+                        usb_mountpoint = '/tmp/usbmaker' + str(self.pid) + '-usb'
+                        iso_mountpoint = '/tmp/usbmaker' + str(self.pid) + '-iso'
+                        mount.mount(device + '1', usb_mountpoint)
+                        mount.mount_iso(self.filename, iso_mountpoint)
+
+                        # Copy the iso contents to the usb drive.
+                        iso.copy_iso_contents(iso_mountpoint, usb_mountpoint)
+
+                        # Unmount the iso file.
+                        mount.unmount(iso_mountpoint)
+
+                        self.label_status.setText('Installing the bootloader...')
+                        self.progressBar.setValue(80)
+
+                        # Make the usb bootable.
+                        if self.comboBox_partscheme.currentIndex() == 0:
+                            target = 'bios'
+                        else:
+                            target = 'uefi'
+                        iso.create_bootable_usb(device, usb_mountpoint, target, self.syslinux_mbr)
+
+                        # Unmount the usb drive.
+                        mount.unmount(usb_mountpoint)
+
+                        if target == 'bios':
+                            partitioning.mark_bootable(device)
+
+                        self.label_status.setText('Completed.')
+                        self.progressBar.setValue(100)
 
                         self.enable_gui()
                 else:
