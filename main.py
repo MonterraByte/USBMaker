@@ -18,6 +18,8 @@
 
 import sys
 import os
+import re
+import subprocess
 from PyQt5 import QtWidgets
 from gui import Ui_MainWindow
 import usb_info
@@ -210,6 +212,13 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.filename = QtWidgets.QFileDialog.getOpenFileName(directory=os.path.expanduser('~'),
                                                               filter='ISO Files (*.iso);;All Files (*)',
                                                               initialFilter='ISO Files (*.iso)')[0]
+        default_label = ''
+        isoinfo_output = subprocess.check_output(['isoinfo', '-d', '-i', self.filename]).decode()
+        isoinfo_list = isoinfo_output.splitlines()
+        for line in isoinfo_list:
+            if re.search('Volume id:', line):
+                default_label = line[11:]
+        self.lineEdit_label.setText(default_label)
 
     def start(self):
         if self.comboBox_device.currentText() != '':
