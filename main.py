@@ -207,8 +207,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def get_file_name(self):
         # getOpenFileName returns a tuple with the file path and the filter,
         # so to get only the file path we use [0].
-        # If the user selects the cancel button, a empty string ('') is
-        # written to self.filename.
+        # If the user selects the cancel button, self.filename remains unchanged
         filename = QtWidgets.QFileDialog.getOpenFileName(directory=os.path.expanduser('~'),
                                                          filter='ISO Files (*.iso);;All Files (*)',
                                                          initialFilter='ISO Files (*.iso)')[0]
@@ -217,14 +216,20 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.filename = filename
 
             default_label = ''
+
             try:
                 isoinfo_output = subprocess.check_output(['isoinfo', '-d', '-i', self.filename]).decode()
             except subprocess.CalledProcessError:
+                # If the selected file is not an iso file, isoinfo will
+                # return a non-zero return code. If this exception isn't
+                # caught, the whole program will be terminated.
                 isoinfo_output = ''
+
             isoinfo_list = isoinfo_output.splitlines()
             for line in isoinfo_list:
                 if re.search('Volume id:', line):
                     default_label = line[11:]
+            
             self.lineEdit_label.setText(default_label)
 
     def start(self):
