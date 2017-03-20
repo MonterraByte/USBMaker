@@ -216,16 +216,16 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             # Only change self.filename if a file is actually selected.
             self.filename = filename
 
-        default_label = ''
-        try:
-            isoinfo_output = subprocess.check_output(['isoinfo', '-d', '-i', self.filename]).decode()
-        except subprocess.CalledProcessError:
-            isoinfo_output = ''
-        isoinfo_list = isoinfo_output.splitlines()
-        for line in isoinfo_list:
-            if re.search('Volume id:', line):
-                default_label = line[11:]
-        self.lineEdit_label.setText(default_label)
+            default_label = ''
+            try:
+                isoinfo_output = subprocess.check_output(['isoinfo', '-d', '-i', self.filename]).decode()
+            except subprocess.CalledProcessError:
+                isoinfo_output = ''
+            isoinfo_list = isoinfo_output.splitlines()
+            for line in isoinfo_list:
+                if re.search('Volume id:', line):
+                    default_label = line[11:]
+            self.lineEdit_label.setText(default_label)
 
     def start(self):
         if self.comboBox_device.currentText() != '':
