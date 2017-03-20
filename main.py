@@ -213,7 +213,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                                                               filter='ISO Files (*.iso);;All Files (*)',
                                                               initialFilter='ISO Files (*.iso)')[0]
         default_label = ''
-        isoinfo_output = subprocess.check_output(['isoinfo', '-d', '-i', self.filename]).decode()
+        try:
+            isoinfo_output = subprocess.check_output(['isoinfo', '-d', '-i', self.filename]).decode()
+        except subprocess.CalledProcessError:
+            isoinfo_output = ''
         isoinfo_list = isoinfo_output.splitlines()
         for line in isoinfo_list:
             if re.search('Volume id:', line):
