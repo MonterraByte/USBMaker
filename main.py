@@ -234,16 +234,28 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def start(self):
         if self.comboBox_device.currentText() != '':
+            # Collect information
+            label = self.lineEdit_label.text()
+            device_id = self.device_id_list[self.comboBox_device.currentIndex()]
+            if self.comboBox_partscheme.currentIndex() == 0 or self.comboBox_partscheme.currentIndex() == 1:
+                partition_table = 'msdos'
+            else:
+                partition_table = 'gpt'
+            filesystem = self.comboBox_filesystem.currentText().lower()
+
+            device = usb_info.get_block_device_name(device_id)
+
+            if self.comboBox_partscheme.currentIndex() == 0:
+                target = 'bios'
+            else:
+                target = 'uefi'
+
             if self.checkBox_bootmethod.isChecked():
                 if self.filename != '':
                     if self.comboBox_bootmethod.currentText() == 'DD Image':
                         self.disable_gui()
 
                         self.progressBar.setValue(0)
-
-                        # Collect information
-                        device_id = self.device_id_list[self.comboBox_device.currentIndex()]
-                        device = usb_info.get_block_device_name(device_id)
 
                         # Write image to usb
                         self.label_status.setText('Writing image...')
@@ -256,21 +268,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                         self.label_status.setText('Completed.')
 
                         self.enable_gui()
+
                     elif self.comboBox_bootmethod.currentText() == 'ISO Image':
                         self.disable_gui()
 
                         self.progressBar.setValue(0)
-
-                        # Collect selected options.
-                        label = self.lineEdit_label.text()
-                        device_id = self.device_id_list[self.comboBox_device.currentIndex()]
-                        if self.comboBox_partscheme.currentIndex() == 0 or self.comboBox_partscheme.currentIndex() == 1:
-                            partition_table = 'msdos'
-                        else:
-                            partition_table = 'gpt'
-                        filesystem = self.comboBox_filesystem.currentText().lower()
-
-                        device = usb_info.get_block_device_name(device_id)
 
                         self.label_status.setText('Creating the partition table...')
 
@@ -310,10 +312,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                         self.progressBar.setValue(80)
 
                         # Make the usb bootable.
-                        if self.comboBox_partscheme.currentIndex() == 0:
-                            target = 'bios'
-                        else:
-                            target = 'uefi'
                         iso.create_bootable_usb(device, usb_mountpoint, target, self.syslinux_mbr)
 
                         # Unmount the usb drive.
@@ -332,17 +330,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.disable_gui()
 
                 self.progressBar.setValue(0)
-
-                # Collect selected options.
-                label = self.lineEdit_label.text()
-                device_id = self.device_id_list[self.comboBox_device.currentIndex()]
-                if self.comboBox_partscheme.currentIndex() == 0 or self.comboBox_partscheme.currentIndex() == 1:
-                    partition_table = 'msdos'
-                else:
-                    partition_table = 'gpt'
-                filesystem = self.comboBox_filesystem.currentText().lower()
-
-                device = usb_info.get_block_device_name(device_id)
 
                 self.label_status.setText('Creating the partition table...')
 
