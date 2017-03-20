@@ -139,6 +139,35 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 # only restored if it is valid. Otherwise it is set to 0.
                 self.comboBox_bootmethod.setCurrentIndex(bootmethod_current_index)
 
+                # The current index for the cluster size comboBox is stored before
+                # its update and restored afterwards.
+
+                clustersize_current_index = self.comboBox_clustersize.currentIndex()
+                if clustersize_current_index == -1:
+                    clustersize_current_index = 0
+                self.comboBox_clustersize.clear()
+                self.comboBox_clustersize.insertItem(0, 'Default')
+                if self.comboBox_filesystem.currentText().lower() != 'exfat':
+                    if self.comboBox_filesystem.currentText().lower() != 'ext4':
+                        self.comboBox_clustersize.insertItem(1, '512')
+                    self.comboBox_clustersize.insertItem(2, '1024')
+                    self.comboBox_clustersize.insertItem(3, '2048')
+                    self.comboBox_clustersize.insertItem(4, '4096')
+                    if self.comboBox_filesystem.currentText().lower() == 'ntfs' or \
+                       self.comboBox_filesystem.currentText().lower() == 'fat32' or \
+                       self.comboBox_filesystem.currentText().lower() == 'fat16' or \
+                       self.comboBox_filesystem.currentText().lower() == 'btrfs':
+                        self.comboBox_clustersize.insertItem(5, '8192')
+                        self.comboBox_clustersize.insertItem(6, '16384')
+                        self.comboBox_clustersize.insertItem(7, '32768')
+                        self.comboBox_clustersize.insertItem(8, '65536')
+
+                self.comboBox_clustersize.setCurrentIndex(0)
+                if clustersize_current_index <= self.comboBox_clustersize.count():
+                    # As the number of valid indexes may vary, the stored index is
+                    # only restored if it is valid. Otherwise it is set to 0.
+                    self.comboBox_clustersize.setCurrentIndex(clustersize_current_index)
+
             if self.comboBox_filesystem.currentText() == 'exFAT' or self.comboBox_filesystem.currentText() == 'UDF':
                 # exFAT or UDF aren't bootable, so comboBox_bootmethod
                 # checkBox_bootmethod are disabled.
@@ -147,6 +176,13 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             else:
                 self.checkBox_bootmethod.setEnabled(True)
                 self.comboBox_bootmethod.setEnabled(True)
+
+        if self.comboBox_clustersize.currentIndex() == 0:
+            self.checkBox_checkbadblocks.setEnabled(False)
+            self.comboBox_checkbadblocks.setEnabled(False)
+        else:
+            self.checkBox_checkbadblocks.setEnabled(True)
+            self.comboBox_checkbadblocks.setEnabled(True)
 
         if not self.checkBox_bootmethod.isChecked():
             self.comboBox_bootmethod.setEnabled(False)
@@ -261,6 +297,26 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
             badblocks_file = '/tmp/usbmaker' + str(self.pid) + '-badblocks.txt'
 
+            # Cluster size
+            if self.comboBox_clustersize.currentText() == '512':
+                clustersize = 512
+            elif self.comboBox_clustersize.currentText() == '1024':
+                clustersize = 1024
+            elif self.comboBox_clustersize.currentText() == '2048':
+                clustersize = 2048
+            elif self.comboBox_clustersize.currentText() == '4096':
+                clustersize = 4096
+            elif self.comboBox_clustersize.currentText() == '8192':
+                clustersize = 8192
+            elif self.comboBox_clustersize.currentText() == '16384':
+                clustersize = 16384
+            elif self.comboBox_clustersize.currentText() == '32768':
+                clustersize = 32768
+            elif self.comboBox_clustersize.currentText() == '65536':
+                clustersize = 65536
+            else:
+                clustersize = 0
+
             if self.checkBox_bootmethod.isChecked():
                 if self.filename != '':
                     if self.comboBox_bootmethod.currentText() == 'DD Image':
@@ -303,16 +359,19 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                         if self.checkBox_checkbadblocks.isChecked():
                             # TODO: actually warn user
                             self.label_status.setText('Checking for bad blocks...')
-                            formatting.check_badblocks(device, num_passes, badblocks_file)
+                            if clustersize == 0:
+                                formatting.check_badblocks(device, num_passes, badblocks_file)
+                            else:
+                                formatting.check_badblocks(device, num_passes, badblocks_file, clustersize)
 
                         self.label_status.setText('Creating the filesystem...')
                         self.progressBar.setValue(10)
 
                         # Create the filesystem.
                         if self.checkBox_checkbadblocks.isChecked():
-                            formatting.create_filesystem(device + '1', filesystem, label, badblocks_file)
+                            formatting.create_filesystem(device + '1', clustersize, filesystem, label, badblocks_file)
                         else:
-                            formatting.create_filesystem(device + '1', filesystem, label)
+                            formatting.create_filesystem(device + '1', clustersize, filesystem, label)
 
                         # Inform the kernel of the partitioning change.
                         partitioning.partprobe()
@@ -363,7 +422,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 if self.checkBox_checkbadblocks.isChecked():
                     # TODO: actually warn user
                     self.label_status.setText('Checking for bad blocks...')
-                    formatting.check_badblocks(device, num_passes, badblocks_file)
+                    if clustersize == 0:
+                        formatting.check_badblocks(device, num_passes, badblocks_file)
+                    else:
+                        formatting.check_badblocks(device, num_passes, badblocks_file, clustersize)
 
                 self.progressBar.setValue(25)
                 self.label_status.setText('Creating the partition...')
@@ -375,9 +437,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
                 # Create the filesystem.
                 if self.checkBox_checkbadblocks.isChecked():
-                    formatting.create_filesystem(device + '1', filesystem, label, badblocks_file)
+                    formatting.create_filesystem(device + '1', filesystem, clustersize, label, badblocks_file)
                 else:
-                    formatting.create_filesystem(device + '1', filesystem, label)
+                    formatting.create_filesystem(device + '1', filesystem, clustersize, label)
 
                 # Inform the kernel of the partitioning change.
                 partitioning.partprobe()
