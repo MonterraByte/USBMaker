@@ -18,18 +18,30 @@
 import subprocess
 
 
-def create_fat32_filesystem(partition, label=''):
+def create_fat32_filesystem(partition, label='', badblocks_file=''):
     if label != '':
-        subprocess.run(['mkfs.fat', '-F32', '-n', label.upper(), '/dev/' + partition])
+        if badblocks_file == '':
+            subprocess.run(['mkfs.fat', '-F32', '-n', label.upper(), '/dev/' + partition])
+        else:
+            subprocess.run(['mkfs.fat', '-F32', '-n', label.upper(), '-l', badblocks_file, '/dev/' + partition])
     else:
-        subprocess.run(['mkfs.fat', '-F32', '/dev/' + partition])
+        if badblocks_file == '':
+            subprocess.run(['mkfs.fat', '-F32', '/dev/' + partition])
+        else:
+            subprocess.run(['mkfs.fat', '-F32', '-l', badblocks_file, '/dev/' + partition])
 
 
-def create_fat16_filesystem(partition, label=''):
+def create_fat16_filesystem(partition, label='', badblocks_file=''):
     if label != '':
-        subprocess.run(['mkfs.fat', '-F16', '-n', label.upper(), '/dev/' + partition])
+        if badblocks_file == '':
+            subprocess.run(['mkfs.fat', '-F16', '-n', label.upper(), '/dev/' + partition])
+        else:
+            subprocess.run(['mkfs.fat', '-F16', '-n', label.upper(), '-l', badblocks_file, '/dev/' + partition])
     else:
-        subprocess.run(['mkfs.fat', '-F16', '/dev/' + partition])
+        if badblocks_file == '':
+            subprocess.run(['mkfs.fat', '-F16', '/dev/' + partition])
+        else:
+            subprocess.run(['mkfs.fat', '-F16', '-l', badblocks_file, '/dev/' + partition])
 
 
 def create_exfat_filesystem(partition, label=''):
@@ -50,32 +62,48 @@ def create_udf_filesystem(partition, label=''):
     subprocess.run(['mkfs.udf', '-l', label, '/dev/' + partition])
 
 
-def create_ext4_filesystem(partition, label=''):
+def create_ext4_filesystem(partition, label='', badblocks_file=''):
     if label != '':
-        subprocess.run(['mkfs.ext4', '-L', label, '/dev/' + partition])
+        if badblocks_file == '':
+            subprocess.run(['mkfs.ext4', '-L', label, '/dev/' + partition])
+        else:
+            subprocess.run(['mkfs.ext4', '-L', label, '-l', badblocks_file, '/dev/' + partition])
     else:
-        subprocess.run(['mkfs.ext4', '/dev/' + partition])
+        if badblocks_file == '':
+            subprocess.run(['mkfs.ext4', '/dev/' + partition])
+        else:
+            subprocess.run(['mkfs.ext4', '-l', badblocks_file, '/dev/' + partition])
 
 
-def create_btrfs_filesystem(partition, label=''):
+def create_btrfs_filesystem(partition, label='', badblocks_file=''):
     if label != '':
-        subprocess.run(['mkfs.btrfs', '-L', label, '/dev/' + partition])
+        if badblocks_file == '':
+            subprocess.run(['mkfs.btrfs', '-L', label, '/dev/' + partition])
+        else:
+            subprocess.run(['mkfs.btrfs', '-L', label, '-l', badblocks_file, '/dev/' + partition])
     else:
-        subprocess.run(['mkfs.btrfs', '/dev/' + partition])
+        if badblocks_file == '':
+            subprocess.run(['mkfs.btrfs', '/dev/' + partition])
+        else:
+            subprocess.run(['mkfs.btrfs', '-l', badblocks_file, '/dev/' + partition])
 
 
-def create_filesystem(partition, filesystem, label=''):
+def create_filesystem(partition, filesystem, label='', badblocks_file=''):
     if filesystem.lower() == 'fat32':
-        create_fat32_filesystem(partition, label)
+        create_fat32_filesystem(partition, label, badblocks_file)
     elif filesystem.lower() == 'fat16':
-        create_fat16_filesystem(partition, label)
+        create_fat16_filesystem(partition, label, badblocks_file)
     elif filesystem.lower() == 'ntfs':
         create_ntfs_filesystem(partition, label)
     elif filesystem.lower() == 'exfat':
         create_exfat_filesystem(partition, label)
     elif filesystem.lower() == 'ext4':
-        create_ext4_filesystem(partition, label)
+        create_ext4_filesystem(partition, label, badblocks_file)
     elif filesystem.lower() == 'btrfs':
-        create_btrfs_filesystem(partition, label)
+        create_btrfs_filesystem(partition, label, badblocks_file)
     elif filesystem.lower() == 'udf':
         create_udf_filesystem(partition, label)
+
+
+def check_badblocks(partition, num_passes, badblocks_file):
+    subprocess.run(['badblocks', '-w', '-p', num_passes, '-o', badblocks_file, '/dev/' + partition])

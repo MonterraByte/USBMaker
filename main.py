@@ -250,12 +250,28 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             else:
                 target = 'uefi'
 
+            if self.comboBox_checkbadblocks.currentIndex() == 1:
+                num_passes = 2
+            elif self.comboBox_checkbadblocks.currentIndex() == 2:
+                num_passes = 3
+            elif self.comboBox_checkbadblocks.currentIndex() == 3:
+                num_passes = 4
+            else:
+                num_passes = 1
+
+            badblocks_file = '/tmp/usbmaker' + str(self.pid) + '-badblocks.txt'
+
             if self.checkBox_bootmethod.isChecked():
                 if self.filename != '':
                     if self.comboBox_bootmethod.currentText() == 'DD Image':
                         self.disable_gui()
 
                         self.progressBar.setValue(0)
+
+                        if self.checkBox_checkbadblocks.isChecked():
+                            # TODO: actually warn user
+                            self.label_status.setText('Checking for bad blocks...')
+                            formatting.check_badblocks(device, num_passes, badblocks_file)
 
                         # Write image to usb
                         self.label_status.setText('Writing image...')
@@ -284,11 +300,19 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
                         partitioning.create_partition_wrapper(device, filesystem)
 
+                        if self.checkBox_checkbadblocks.isChecked():
+                            # TODO: actually warn user
+                            self.label_status.setText('Checking for bad blocks...')
+                            formatting.check_badblocks(device, num_passes, badblocks_file)
+
                         self.label_status.setText('Creating the filesystem...')
                         self.progressBar.setValue(10)
 
                         # Create the filesystem.
-                        formatting.create_filesystem(device + '1', filesystem, label)
+                        if self.checkBox_checkbadblocks.isChecked():
+                            formatting.create_filesystem(device + '1', filesystem, label, badblocks_file)
+                        else:
+                            formatting.create_filesystem(device + '1', filesystem, label)
 
                         # Inform the kernel of the partitioning change.
                         partitioning.partprobe()
@@ -336,6 +360,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 # Partition the usb drive.
                 partitioning.create_partition_table(device, partition_table)
 
+                if self.checkBox_checkbadblocks.isChecked():
+                    # TODO: actually warn user
+                    self.label_status.setText('Checking for bad blocks...')
+                    formatting.check_badblocks(device, num_passes, badblocks_file)
+
                 self.progressBar.setValue(25)
                 self.label_status.setText('Creating the partition...')
 
@@ -345,7 +374,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.label_status.setText('Creating the filesystem...')
 
                 # Create the filesystem.
-                formatting.create_filesystem(device + '1', filesystem, label)
+                if self.checkBox_checkbadblocks.isChecked():
+                    formatting.create_filesystem(device + '1', filesystem, label, badblocks_file)
+                else:
+                    formatting.create_filesystem(device + '1', filesystem, label)
 
                 # Inform the kernel of the partitioning change.
                 partitioning.partprobe()
