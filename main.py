@@ -209,9 +209,13 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # so to get only the file path we use [0].
         # If the user selects the cancel button, a empty string ('') is
         # written to self.filename.
-        self.filename = QtWidgets.QFileDialog.getOpenFileName(directory=os.path.expanduser('~'),
-                                                              filter='ISO Files (*.iso);;All Files (*)',
-                                                              initialFilter='ISO Files (*.iso)')[0]
+        filename = QtWidgets.QFileDialog.getOpenFileName(directory=os.path.expanduser('~'),
+                                                         filter='ISO Files (*.iso);;All Files (*)',
+                                                         initialFilter='ISO Files (*.iso)')[0]
+        if filename != '':
+            # Only change self.filename if a file is actually selected.
+            self.filename = filename
+
         default_label = ''
         try:
             isoinfo_output = subprocess.check_output(['isoinfo', '-d', '-i', self.filename]).decode()
