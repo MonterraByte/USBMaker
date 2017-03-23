@@ -133,13 +133,24 @@
         <layout class="QHBoxLayout" name="horizontalLayout_2">
          <item>
           <widget class="QCheckBox" name="checkBox_checkbadblocks">
+           <property name="font">
+            <font>
+             <pointsize>9</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Check device for bad blocks</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QComboBox" name="comboBox_checkbadblocks"/>
+          <widget class="QComboBox" name="comboBox_checkbadblocks">
+           <property name="font">
+            <font>
+             <pointsize>9</pointsize>
+            </font>
+           </property>
+          </widget>
          </item>
         </layout>
        </item>
@@ -147,6 +158,11 @@
         <layout class="QHBoxLayout" name="horizontalLayout_3">
          <item>
           <widget class="QCheckBox" name="checkBox_bootmethod">
+           <property name="font">
+            <font>
+             <pointsize>9</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Create a bootable disk using</string>
            </property>
@@ -156,7 +172,13 @@
           </widget>
          </item>
          <item>
-          <widget class="QComboBox" name="comboBox_bootmethod"/>
+          <widget class="QComboBox" name="comboBox_bootmethod">
+           <property name="font">
+            <font>
+             <pointsize>9</pointsize>
+            </font>
+           </property>
+          </widget>
          </item>
          <item>
           <widget class="QPushButton" name="pushButton_filedialog">
@@ -201,7 +223,7 @@
           </sizepolicy>
          </property>
          <property name="text">
-          <string>TextLabel</string>
+          <string/>
          </property>
          <property name="textFormat">
           <enum>Qt::PlainText</enum>
