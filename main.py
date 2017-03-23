@@ -130,11 +130,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.comboBox_bootmethod.insertItem(2, 'UEFI:NTFS')
             if self.comboBox_partscheme.currentText() == 'MBR partition scheme for BIOS or UEFI':
                 self.comboBox_bootmethod.insertItem(3, 'FreeDOS')
-                self.comboBox_bootmethod.insertItem(4, 'Syslinux 4.07')
-                self.comboBox_bootmethod.insertItem(5, 'Syslinux 6.03')
+                self.comboBox_bootmethod.insertItem(4, 'Syslinux 4')
+                self.comboBox_bootmethod.insertItem(5, 'Syslinux 6')
                 self.comboBox_bootmethod.insertItem(6, 'ReactOS')
-                self.comboBox_bootmethod.insertItem(7, 'Grub 2.02 ~beta3')
-                self.comboBox_bootmethod.insertItem(8, 'Grub4DOS 0.4.6a')
+                self.comboBox_bootmethod.insertItem(7, 'Grub 2')
+                self.comboBox_bootmethod.insertItem(8, 'Grub4DOS')
             self.comboBox_bootmethod.setCurrentIndex(0)
             if bootmethod_current_index <= self.comboBox_bootmethod.count():
                 # As the number of valid indexes may vary, the stored index is
