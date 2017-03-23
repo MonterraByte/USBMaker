@@ -174,6 +174,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 # exFAT or UDF aren't bootable, so comboBox_bootmethod
                 # checkBox_bootmethod are disabled.
                 self.checkBox_bootmethod.setEnabled(False)
+                self.checkBox_bootmethod.setChecked(False)
                 self.comboBox_bootmethod.setEnabled(False)
             else:
                 self.checkBox_bootmethod.setEnabled(True)
@@ -181,6 +182,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         if self.comboBox_clustersize.currentIndex() == 0:
             self.checkBox_checkbadblocks.setEnabled(False)
+            self.checkBox_checkbadblocks.setChecked(False)
             self.comboBox_checkbadblocks.setEnabled(False)
         else:
             self.checkBox_checkbadblocks.setEnabled(True)
