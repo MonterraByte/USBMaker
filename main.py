@@ -81,6 +81,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.comboBox_filesystem.currentIndexChanged.connect(self.update_gui)
         self.comboBox_partscheme.currentIndexChanged.connect(self.update_gui)
         self.comboBox_bootmethod.currentIndexChanged.connect(self.update_gui)
+        self.comboBox_clustersize.currentIndexChanged.connect(self.update_gui)
         self.checkBox_bootmethod.stateChanged.connect(self.update_gui)
         self.checkBox_checkbadblocks.stateChanged.connect(self.update_gui)
 
@@ -104,6 +105,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.comboBox_filesystem.currentIndexChanged.disconnect()
         self.comboBox_partscheme.currentIndexChanged.disconnect()
         self.comboBox_bootmethod.currentIndexChanged.disconnect()
+        self.comboBox_clustersize.currentIndexChanged.disconnect()
 
         if self.comboBox_bootmethod.currentText() == "DD Image" and self.checkBox_bootmethod.isChecked():
             # Most of the gui is disabled if "DD Image" is selected.
@@ -200,6 +202,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.comboBox_filesystem.currentIndexChanged.connect(self.update_gui)
         self.comboBox_partscheme.currentIndexChanged.connect(self.update_gui)
         self.comboBox_bootmethod.currentIndexChanged.connect(self.update_gui)
+        self.comboBox_clustersize.currentIndexChanged.connect(self.update_gui)
 
     def disable_gui(self):
         self.pushButton_start.setEnabled(False)
