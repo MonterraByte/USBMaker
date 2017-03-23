@@ -22,6 +22,7 @@ import re
 import subprocess
 from PyQt5 import QtWidgets
 from gui import Ui_MainWindow
+import about
 import usb_info
 import partitioning
 import formatting
@@ -36,9 +37,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.setupUi(self)
 
+        self.about_window = about.About()
+
         # Here we set up the gui elements that aren't modified
         # elsewhere in the code.
         self.pushButton_close.clicked.connect(self.close)
+        self.pushButton_about.clicked.connect(self.about_window.show)
 
         self.comboBox_partscheme.insertItem(0, 'MBR partition scheme for BIOS or UEFI')
         self.comboBox_partscheme.insertItem(1, 'MBR partition scheme for UEFI')
