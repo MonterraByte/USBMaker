@@ -21,7 +21,7 @@ import subprocess
 
 
 def copy_iso_contents(iso_mountpoint, device_mountpoint):
-    distutils.dir_util.copy_tree(iso_mountpoint, device_mountpoint)
+    distutils.dir_util.copy_tree(iso_mountpoint, device_mountpoint, preserve_symlinks=1)
     os.sync()
 
 
