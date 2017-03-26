@@ -378,9 +378,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
                         # Create the filesystem.
                         if self.checkBox_checkbadblocks.isChecked():
-                            formatting.create_filesystem(device + '1', clustersize, filesystem, label, badblocks_file)
+                            formatting.create_filesystem(device + '1', filesystem, clustersize, label, badblocks_file)
                         else:
-                            formatting.create_filesystem(device + '1', clustersize, filesystem, label)
+                            formatting.create_filesystem(device + '1', filesystem, clustersize, label)
 
                         # Inform the kernel of the partitioning change.
                         partitioning.partprobe()
