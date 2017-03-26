@@ -308,23 +308,23 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
             # Cluster size
             if self.comboBox_clustersize.currentText() == '512':
-                clustersize = 512
+                clustersize = '512'
             elif self.comboBox_clustersize.currentText() == '1024':
-                clustersize = 1024
+                clustersize = '1024'
             elif self.comboBox_clustersize.currentText() == '2048':
-                clustersize = 2048
+                clustersize = '2048'
             elif self.comboBox_clustersize.currentText() == '4096':
-                clustersize = 4096
+                clustersize = '4096'
             elif self.comboBox_clustersize.currentText() == '8192':
-                clustersize = 8192
+                clustersize = '8192'
             elif self.comboBox_clustersize.currentText() == '16384':
-                clustersize = 16384
+                clustersize = '16384'
             elif self.comboBox_clustersize.currentText() == '32768':
-                clustersize = 32768
+                clustersize = '32768'
             elif self.comboBox_clustersize.currentText() == '65536':
-                clustersize = 65536
+                clustersize = '65536'
             else:
-                clustersize = 0
+                clustersize = ''
 
             if self.checkBox_bootmethod.isChecked():
                 if self.filename != '':
@@ -368,7 +368,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                         if self.checkBox_checkbadblocks.isChecked():
                             # TODO: actually warn user
                             self.label_status.setText('Checking for bad blocks...')
-                            if clustersize == 0:
+                            if clustersize == '':
                                 formatting.check_badblocks(device, num_passes, badblocks_file)
                             else:
                                 formatting.check_badblocks(device, num_passes, badblocks_file, clustersize)
@@ -431,7 +431,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 if self.checkBox_checkbadblocks.isChecked():
                     # TODO: actually warn user
                     self.label_status.setText('Checking for bad blocks...')
-                    if clustersize == 0:
+                    if clustersize == '':
                         formatting.check_badblocks(device, num_passes, badblocks_file)
                     else:
                         formatting.check_badblocks(device, num_passes, badblocks_file, clustersize)
