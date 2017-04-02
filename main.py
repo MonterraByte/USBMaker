@@ -20,6 +20,7 @@ import sys
 import os
 import re
 import subprocess
+import threading
 from PyQt5 import QtWidgets
 from gui import Ui_MainWindow
 import about
@@ -98,7 +99,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.pushButton_refresh.clicked.connect(self.refresh_device_list)
 
         # The start button is connected to the start function.
-        self.pushButton_start.clicked.connect(self.start)
+        self.pushButton_start.clicked.connect(self.thread_start)
 
     def update_gui(self):
         # This function is used to update/initialize the parts of the gui
@@ -459,6 +460,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.enable_gui()
         else:
             self.label_status.setText('Error: no device selected.')
+
+    def thread_start(self):
+        # Start the self.start function in a different thread.
+        # This is done to keep the main thread (the GUI) running.
+        thread = threading.Thread(target=self.start, daemon=True)
+        thread.start()
 
 
 app = QtWidgets.QApplication(sys.argv)
