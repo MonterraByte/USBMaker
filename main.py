@@ -243,6 +243,21 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.update_gui()
 
+    def show_badblocks_messagebox(self, badblocks_file):
+        badblocks_messagebox = QtWidgets.QMessageBox()
+        badblocks_messagebox.setStandardButtons(QtWidgets.QMessageBox.Close)
+
+        if os.path.getsize(badblocks_file) > 0:
+            # There are bad blocks in the drive.
+            badblocks_messagebox.setText('Bad blocks were found on the drive.')
+            badblocks_messagebox.setIcon(QtWidgets.QMessageBox.Warning)
+        else:
+            # There aren't any bad blocks in the drive.
+            badblocks_messagebox.setText('No bad blocks were found on the drive.')
+            badblocks_messagebox.setIcon(QtWidgets.QMessageBox.Information)
+
+        badblocks_messagebox.open()
+
     def refresh_device_list(self):
         self.device_id_list = usb_info.get_id_list()
         self.comboBox_device.clear()
@@ -335,9 +350,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                         self.progressBar.setValue(0)
 
                         if self.checkBox_checkbadblocks.isChecked():
-                            # TODO: actually warn user
                             self.label_status.setText('Checking for bad blocks...')
                             formatting.check_badblocks(device, num_passes, badblocks_file)
+
+                            # Show message box informing the user of the badblocks check.
+                            self.show_badblocks_messagebox(badblocks_file)
 
                         # Write image to usb
                         self.label_status.setText('Writing image...')
@@ -367,12 +384,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                         partitioning.create_partition_wrapper(device, filesystem)
 
                         if self.checkBox_checkbadblocks.isChecked():
-                            # TODO: actually warn user
                             self.label_status.setText('Checking for bad blocks...')
                             if clustersize == '':
                                 formatting.check_badblocks(device, num_passes, badblocks_file)
                             else:
                                 formatting.check_badblocks(device, num_passes, badblocks_file, clustersize)
+
+                            # Show message box informing the user of the badblocks check.
+                            self.show_badblocks_messagebox(badblocks_file)
 
                         self.label_status.setText('Creating the filesystem...')
                         self.progressBar.setValue(10)
@@ -430,12 +449,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 partitioning.create_partition_table(device, partition_table)
 
                 if self.checkBox_checkbadblocks.isChecked():
-                    # TODO: actually warn user
                     self.label_status.setText('Checking for bad blocks...')
                     if clustersize == '':
                         formatting.check_badblocks(device, num_passes, badblocks_file)
                     else:
                         formatting.check_badblocks(device, num_passes, badblocks_file, clustersize)
+
+                    # Show message box informing the user of the badblocks check.
+                    self.show_badblocks_messagebox(badblocks_file)
 
                 self.progressBar.setValue(25)
                 self.label_status.setText('Creating the partition...')
