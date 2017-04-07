@@ -20,8 +20,7 @@ import sys
 import os
 import re
 import subprocess
-import threading
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtCore
 from gui import Ui_MainWindow
 import about
 import usb_info
@@ -30,6 +29,17 @@ import formatting
 import dd
 import mount
 import iso
+
+
+class StartRunnable(QtCore.QRunnable):
+    def __init__(self, instance):
+        QtCore.QRunnable.__init__(self)
+        # self.instance should be the parent's self
+        self.instance = instance
+
+    def run(self):
+        # Run self.start
+        self.instance.start()
 
 
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
@@ -98,7 +108,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # The refresh button is connected to the refresh_device_list function.
         self.pushButton_refresh.clicked.connect(self.refresh_device_list)
 
-        # The start button is connected to the start function.
+        # The start button is connected to the start function
+        # through a QRunnable to make it execute on a separate thread.
+        self.runnable = StartRunnable(self)
         self.pushButton_start.clicked.connect(self.thread_start)
 
     def update_gui(self):
@@ -485,8 +497,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def thread_start(self):
         # Start the self.start function in a different thread.
         # This is done to keep the main thread (the GUI) running.
-        thread = threading.Thread(target=self.start, daemon=True)
-        thread.start()
+        QtCore.QThreadPool.globalInstance().start(self.runnable)
 
 
 app = QtWidgets.QApplication(sys.argv)
