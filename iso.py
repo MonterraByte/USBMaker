@@ -19,6 +19,26 @@ import os
 import distutils.dir_util
 import subprocess
 
+# os.symlink raises a PermissionError when creating symlinks
+# on filesystems that don't support them (FAT32, for example).
+#
+# This function is overriden so the program continues executing
+# when this exception is raised. This is preferred to setting
+# preserve_symlinks=0 in the distutils.dir_util.copy_tree function
+# because it also avoids recursive symlinks.
+orig_symlink = os.symlink
+
+
+def _symlink(source, link_name, target_is_directory=False, dir_fd=None):
+    try:
+        orig_symlink(source, link_name, target_is_directory=target_is_directory, dir_fd=dir_fd)
+    except PermissionError:
+        pass
+
+# Any function (distutils.dir_util.copy_tree in particular) that
+# uses os.symlink will use the _symlink function instead.
+os.symlink = _symlink
+
 
 def copy_iso_contents(iso_mountpoint, device_mountpoint):
     distutils.dir_util.copy_tree(iso_mountpoint, device_mountpoint, preserve_symlinks=1)
