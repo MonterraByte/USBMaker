@@ -76,12 +76,23 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.pid = os.getpid()
 
         # Find syslinux
+        self.messageBox_missingsyslinux = QtWidgets.QMessageBox()
+        self.messageBox_missingsyslinux.setStandardButtons(QtWidgets.QMessageBox.Ok)
+
+        self.messageBox_missingsyslinux.setWindowTitle('Syslinux is missing - USBMaker')
+        self.messageBox_missingsyslinux\
+            .setText('Syslinux was not found.\nThe creation of bootable drives with an ISO image may not work.')
+        self.messageBox_missingsyslinux.setIcon(QtWidgets.QMessageBox.Warning)
+
         if os.path.exists('/usr/lib/syslinux/bios/mbr.bin'):
             self.syslinux_mbr = '/usr/lib/syslinux/bios/mbr.bin'
         elif os.path.exists('/usr/lib/syslinux/mbr/mbr.bin'):
             self.syslinux_mbr = '/usr/lib/syslinux/mbr/mbr.bin'
         elif os.path.exists('/usr/share/syslinux/mbr.bin'):
             self.syslinux_mbr = '/usr/share/syslinux/mbr.bin'
+        else:
+            self.syslinux_mbr = ''
+            self.messageBox_missingsyslinux.open()
 
         # self.device_id_list is initialized here.
         self.device_id_list = []
