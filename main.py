@@ -407,6 +407,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
                         partitioning.create_partition_wrapper(device, filesystem)
 
+                        # Inform the kernel of the partitioning change.
+                        partitioning.partprobe()
+
                         if self.checkBox_checkbadblocks.isChecked():
                             self.label_status.setText('Checking for bad blocks...')
                             if clustersize == '':
@@ -425,9 +428,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                             formatting.create_filesystem(device + '1', filesystem, clustersize, label, badblocks_file)
                         else:
                             formatting.create_filesystem(device + '1', filesystem, clustersize, label)
-
-                        # Inform the kernel of the partitioning change.
-                        partitioning.partprobe()
 
                         self.label_status.setText('Copying files...')
                         self.progressBar.setValue(25)
@@ -487,6 +487,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
                 partitioning.create_partition_wrapper(device, filesystem)
 
+                # Inform the kernel of the partitioning change.
+                partitioning.partprobe()
+
                 self.progressBar.setValue(50)
                 self.label_status.setText('Creating the filesystem...')
 
@@ -495,9 +498,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     formatting.create_filesystem(device + '1', filesystem, clustersize, label, badblocks_file)
                 else:
                     formatting.create_filesystem(device + '1', filesystem, clustersize, label)
-
-                # Inform the kernel of the partitioning change.
-                partitioning.partprobe()
 
                 self.progressBar.setValue(100)
                 self.label_status.setText('Completed.')
