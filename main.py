@@ -414,6 +414,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
                         partitioning.create_partition_wrapper(device, filesystem)
 
+                        if partition_table == 'gpt':
+                            partitioning.change_partition_name(device, label)
+
                         # Inform the kernel of the partitioning change.
                         partitioning.partprobe()
 
@@ -496,6 +499,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.label_status.setText('Creating the partition...')
 
                 partitioning.create_partition_wrapper(device, filesystem)
+
+                if partition_table == 'gpt':
+                    partitioning.change_partition_name(device, label)
 
                 # Inform the kernel of the partitioning change.
                 partitioning.partprobe()

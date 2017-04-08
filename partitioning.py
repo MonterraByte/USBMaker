@@ -59,6 +59,10 @@ def mark_bootable(device):
     subprocess.run(['parted', '-s', '/dev/' + device, 'set', '1', 'boot', 'on'])
 
 
+def change_partition_name(device, name):
+    subprocess.run(['parted', '-s', '/dev/' + device, 'name', '1', name])
+
+
 def partprobe():
     # Informs the kernel of changes in the partition table.
     subprocess.run(['partprobe'])
