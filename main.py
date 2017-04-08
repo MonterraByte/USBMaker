@@ -94,6 +94,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.syslinux_mbr = ''
             self.messageBox_missingsyslinux.open()
 
+        # The badblocks message box is initialized here.
+        self.messageBox_badblocks = QtWidgets.QMessageBox()
+        self.messageBox_badblocks.setStandardButtons(QtWidgets.QMessageBox.Close)
+
         # self.device_id_list is initialized here.
         self.device_id_list = []
 
@@ -267,19 +271,16 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.update_gui()
 
     def show_badblocks_messagebox(self, badblocks_file):
-        badblocks_messagebox = QtWidgets.QMessageBox()
-        badblocks_messagebox.setStandardButtons(QtWidgets.QMessageBox.Close)
-
         if os.path.getsize(badblocks_file) > 0:
             # There are bad blocks in the drive.
-            badblocks_messagebox.setText('Bad blocks were found on the drive.')
-            badblocks_messagebox.setIcon(QtWidgets.QMessageBox.Warning)
+            self.messageBox_badblocks.setText('Bad blocks were found on the drive.')
+            self.messageBox_badblocks.setIcon(QtWidgets.QMessageBox.Warning)
         else:
             # There aren't any bad blocks in the drive.
-            badblocks_messagebox.setText('No bad blocks were found on the drive.')
-            badblocks_messagebox.setIcon(QtWidgets.QMessageBox.Information)
+            self.messageBox_badblocks.setText('No bad blocks were found on the drive.')
+            self.messageBox_badblocks.setIcon(QtWidgets.QMessageBox.Information)
 
-        badblocks_messagebox.open()
+        self.badblocks_messagebox.open()
 
     def refresh_device_list(self):
         self.device_id_list = usb_info.get_id_list()
