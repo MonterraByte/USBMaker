@@ -52,14 +52,12 @@ def get_block_device_name(device_id):
 
 def get_size(device):
     # /sys/block/*/size is read to get the number of sectors in the usb.
-    size_file = open('/sys/block/' + device + '/size', mode='r')
-    sectors = int(size_file.read().rstrip())
-    size_file.close()
+    with open('/sys/block/' + device + '/size', mode='r') as size_file:
+        sectors = int(size_file.read().rstrip())
 
     # /sys/block/*/queue/logical_block_size is read to get the size of sectors in the usb.
-    block_size_file = open('/sys/block/' + device + '/queue/logical_block_size', mode='r')
-    block_size = int(block_size_file.read().rstrip())
-    block_size_file.close()
+    with open('/sys/block/' + device + '/queue/logical_block_size', mode='r') as block_size_file:
+        block_size = int(block_size_file.read().rstrip())
 
     # The sector size is multiplied by the number of sectors to get the number of bytes.
     return sectors * block_size
