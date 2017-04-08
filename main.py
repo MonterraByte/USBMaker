@@ -373,6 +373,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
                         self.progressBar.setValue(0)
 
+                        # Unmount partitions before continuing.
+                        mount.unmount_all_partitions(device)
+
                         if self.checkBox_checkbadblocks.isChecked():
                             self.label_status.setText('Checking for bad blocks...')
                             formatting.check_badblocks(device, num_passes, badblocks_file)
@@ -396,6 +399,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                         self.disable_gui()
 
                         self.progressBar.setValue(0)
+
+                        # Unmount partitions before continuing.
+                        mount.unmount_all_partitions(device)
 
                         self.label_status.setText('Creating the partition table...')
 
@@ -466,6 +472,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.disable_gui()
 
                 self.progressBar.setValue(0)
+
+                # Unmount partitions before continuing.
+                mount.unmount_all_partitions(device)
 
                 self.label_status.setText('Creating the partition table...')
 

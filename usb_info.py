@@ -61,3 +61,12 @@ def get_size(device):
 
     # The sector size is multiplied by the number of sectors to get the number of bytes.
     return sectors * block_size
+
+
+def get_partitions(device):
+    part_list = []
+    for file in os.listdir('/dev/'):
+        if re.search(device, file):
+            part_list.append(file)
+    part_list.remove(device)
+    return part_list

@@ -17,6 +17,7 @@
 
 import os
 import subprocess
+import usb_info
 
 
 def mount(partition, mountpoint):
@@ -33,3 +34,13 @@ def unmount(mountpoint):
     subprocess.run(['umount', mountpoint])
     # The mount point should be empty, so we can use rmdir.
     os.rmdir(mountpoint)
+
+
+def unmount_partition(partition):
+    subprocess.run(['umount', '/dev/' + partition])
+
+
+def unmount_all_partitions(device):
+    partitions = usb_info.get_partitions(device)
+    for partition in partitions:
+        unmount_partition(partition)
