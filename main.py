@@ -126,6 +126,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # The start button is connected to the start function
         # through a QRunnable to make it execute on a separate thread.
         self.runnable = StartRunnable(self)
+        self.runnable.setAutoDelete(False)
         self.pushButton_start.clicked.connect(self.thread_start)
 
     def update_gui(self):
