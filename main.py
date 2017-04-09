@@ -178,34 +178,34 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 # only restored if it is valid. Otherwise it is set to 0.
                 self.comboBox_bootmethod.setCurrentIndex(bootmethod_current_index)
 
-                # The current index for the cluster size comboBox is stored before
-                # its update and restored afterwards.
+            # The current index for the cluster size comboBox is stored before
+            # its update and restored afterwards.
 
-                clustersize_current_index = self.comboBox_clustersize.currentIndex()
-                if clustersize_current_index == -1:
-                    clustersize_current_index = 0
-                self.comboBox_clustersize.clear()
-                self.comboBox_clustersize.insertItem(0, 'Default')
-                if self.comboBox_filesystem.currentText().lower() != 'exfat':
-                    if self.comboBox_filesystem.currentText().lower() != 'ext4':
-                        self.comboBox_clustersize.insertItem(1, '512')
-                    self.comboBox_clustersize.insertItem(2, '1024')
-                    self.comboBox_clustersize.insertItem(3, '2048')
-                    self.comboBox_clustersize.insertItem(4, '4096')
-                    if self.comboBox_filesystem.currentText().lower() == 'ntfs' or \
-                       self.comboBox_filesystem.currentText().lower() == 'fat32' or \
-                       self.comboBox_filesystem.currentText().lower() == 'fat16' or \
-                       self.comboBox_filesystem.currentText().lower() == 'btrfs':
-                        self.comboBox_clustersize.insertItem(5, '8192')
-                        self.comboBox_clustersize.insertItem(6, '16384')
-                        self.comboBox_clustersize.insertItem(7, '32768')
-                        self.comboBox_clustersize.insertItem(8, '65536')
+            clustersize_current_index = self.comboBox_clustersize.currentIndex()
+            if clustersize_current_index == -1:
+                clustersize_current_index = 0
+            self.comboBox_clustersize.clear()
+            self.comboBox_clustersize.insertItem(0, 'Default')
+            if self.comboBox_filesystem.currentText().lower() != 'exfat':
+                if self.comboBox_filesystem.currentText().lower() != 'ext4':
+                    self.comboBox_clustersize.insertItem(1, '512')
+                self.comboBox_clustersize.insertItem(2, '1024')
+                self.comboBox_clustersize.insertItem(3, '2048')
+                self.comboBox_clustersize.insertItem(4, '4096')
+                if self.comboBox_filesystem.currentText().lower() == 'ntfs' or \
+                   self.comboBox_filesystem.currentText().lower() == 'fat32' or \
+                   self.comboBox_filesystem.currentText().lower() == 'fat16' or \
+                   self.comboBox_filesystem.currentText().lower() == 'btrfs':
+                    self.comboBox_clustersize.insertItem(5, '8192')
+                    self.comboBox_clustersize.insertItem(6, '16384')
+                    self.comboBox_clustersize.insertItem(7, '32768')
+                    self.comboBox_clustersize.insertItem(8, '65536')
 
-                self.comboBox_clustersize.setCurrentIndex(0)
-                if clustersize_current_index <= self.comboBox_clustersize.count():
-                    # As the number of valid indexes may vary, the stored index is
-                    # only restored if it is valid. Otherwise it is set to 0.
-                    self.comboBox_clustersize.setCurrentIndex(clustersize_current_index)
+            self.comboBox_clustersize.setCurrentIndex(0)
+            if clustersize_current_index <= self.comboBox_clustersize.count():
+                # As the number of valid indexes may vary, the stored index is
+                # only restored if it is valid. Otherwise it is set to 0.
+                self.comboBox_clustersize.setCurrentIndex(clustersize_current_index)
 
             if self.comboBox_filesystem.currentText() == 'exFAT' or self.comboBox_filesystem.currentText() == 'UDF':
                 # exFAT or UDF aren't bootable, so comboBox_bootmethod
