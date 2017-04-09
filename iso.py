@@ -48,11 +48,31 @@ def copy_iso_contents(iso_mountpoint, device_mountpoint):
 def create_bootable_usb(device, device_mountpoint, target='uefi', syslinux_mbr='/usr/lib/syslinux/bios/mbr.bin'):
     if target.lower() != 'uefi':
         if os.path.isdir(device_mountpoint + '/isolinux'):
-            install_syslinux_over_isolinux(device, device_mountpoint, syslinux_mbr)
+            install_syslinux(device, device_mountpoint, syslinux_mbr)
 
 
-def install_syslinux_over_isolinux(device, device_mountpoint, syslinux_mbr):
-    os.rename(device_mountpoint + '/isolinux', device_mountpoint + '/syslinux')
-    os.rename(device_mountpoint + '/syslinux/isolinux.cfg', device_mountpoint + '/syslinux/syslinux.cfg')
+def install_syslinux(device, device_mountpoint, syslinux_mbr):
+    # Change the config files from ISOLINUX to SYSLINUX.
+    if os.path.exists(device_mountpoint + '/isolinux') and not os.path.exists(device_mountpoint + '/syslinux'):
+        os.rename(device_mountpoint + '/isolinux', device_mountpoint + '/syslinux')
+
+    if os.path.exists(device_mountpoint + '/syslinux/isolinux.cfg') and not \
+            os.path.exists(device_mountpoint + '/syslinux/syslinux.cfg'):
+        os.rename(device_mountpoint + '/syslinux/isolinux.cfg', device_mountpoint + '/syslinux/syslinux.cfg')
+
+    if os.path.exists(device_mountpoint + '/boot/isolinux') and not \
+            os.path.exists(device_mountpoint + '/boot/syslinux'):
+        os.rename(device_mountpoint + '/boot/isolinux', device_mountpoint + '/boot/syslinux')
+
+    if os.path.exists(device_mountpoint + '/boot/syslinux/isolinux.cfg') and not \
+            os.path.exists(device_mountpoint + '/boot/syslinux/syslinux.cfg'):
+        os.rename(device_mountpoint + '/boot/syslinux/isolinux.cfg', device_mountpoint + '/boot/syslinux/syslinux.cfg')
+
+    if os.path.exists(device_mountpoint + '/isolinux.cfg') and not os.path.exists(device_mountpoint + '/syslinux.cfg'):
+        os.rename(device_mountpoint + '/isolinux.cfg', device_mountpoint + '/syslinux.cfg')
+
+    # Install SYSLINUX to the partition.
     subprocess.run(['extlinux', '--install', device_mountpoint])
+
+    # Install SYSLINUX to the MBR.
     subprocess.run(['dd', 'bs=440', 'count=1', 'if=' + syslinux_mbr, 'of=/dev/' + device])
