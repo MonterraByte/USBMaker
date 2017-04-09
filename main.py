@@ -47,13 +47,15 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         super(MainWindow, self).__init__()
 
         self.setupUi(self)
+        desktop_center = QtWidgets.QDesktopWidget().availableGeometry().center()
+        self.move(int(desktop_center.x() - self.width() / 2), int(desktop_center.y() - self.height() / 2))
 
         self.about_window = about.About()
 
         # Here we set up the gui elements that aren't modified
         # elsewhere in the code.
         self.pushButton_close.clicked.connect(self.close)
-        self.pushButton_about.clicked.connect(self.about_window.show)
+        self.pushButton_about.clicked.connect(self.show_about_window)
 
         self.comboBox_partscheme.insertItem(0, 'MBR partition scheme for BIOS or UEFI')
         self.comboBox_partscheme.insertItem(1, 'MBR partition scheme for UEFI')
@@ -92,7 +94,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.syslinux_mbr = '/usr/share/syslinux/mbr.bin'
         else:
             self.syslinux_mbr = ''
-            self.messageBox_missingsyslinux.open()
+            self.show_missingsyslinux_messagebox()
 
         # The badblocks message box is initialized here.
         self.messageBox_badblocks = QtWidgets.QMessageBox()
@@ -271,6 +273,24 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.update_gui()
 
+    def show_about_window(self):
+        center_point_x = int(self.x() + self.width() / 2)
+        center_point_y = int(self.y() + self.height() / 2)
+        x = int(center_point_x - self.about_window.width() / 2)
+        y = int(center_point_y - self.about_window.height() / 2)
+        self.about_window.move(x, y)
+        self.about_window.show()
+
+    def show_missingsyslinux_messagebox(self):
+        center_point_x = int(self.x() + self.width() / 2)
+        center_point_y = int(self.y() + self.height() / 2)
+        # The message box needs to be shown in order for width() and height()
+        # to return the correct values.
+        self.messageBox_missingsyslinux.show()
+        x = int(center_point_x - self.messageBox_missingsyslinux.width() / 2)
+        y = int(center_point_y - self.messageBox_missingsyslinux.height() / 2)
+        self.messageBox_missingsyslinux.move(x, y)
+
     def show_badblocks_messagebox(self, badblocks_file):
         if os.path.getsize(badblocks_file) > 0:
             # There are bad blocks in the drive.
@@ -281,7 +301,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.messageBox_badblocks.setText('No bad blocks were found on the drive.')
             self.messageBox_badblocks.setIcon(QtWidgets.QMessageBox.Information)
 
-        self.messageBox_badblocks.open()
+        center_point_x = int(self.x() + self.width() / 2)
+        center_point_y = int(self.y() + self.height() / 2)
+        # The message box needs to be shown in order for width() and height()
+        # to return the correct values.
+        self.messageBox_badblocks.show()
+        x = int(center_point_x - self.messageBox_badblocks.width() / 2)
+        y = int(center_point_y - self.messageBox_badblocks.height() / 2)
+        self.messageBox_badblocks.move(x, y)
 
     def refresh_device_list(self):
         self.device_id_list = usb_info.get_id_list()
