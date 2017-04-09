@@ -281,7 +281,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.messageBox_badblocks.setText('No bad blocks were found on the drive.')
             self.messageBox_badblocks.setIcon(QtWidgets.QMessageBox.Information)
 
-        self.badblocks_messagebox.open()
+        self.messageBox_badblocks.open()
 
     def refresh_device_list(self):
         self.device_id_list = usb_info.get_id_list()
