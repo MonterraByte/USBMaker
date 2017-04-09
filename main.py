@@ -69,6 +69,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.comboBox_filesystem.insertItem(5, 'ext4')
         self.comboBox_filesystem.insertItem(6, 'Btrfs')
 
+        self.comboBox_bootmethod.insertItem(0, 'ISO Image')
+        self.comboBox_bootmethod.insertItem(1, 'DD Image')
+
         self.comboBox_checkbadblocks.insertItem(0, '1 Pass')
         self.comboBox_checkbadblocks.insertItem(1, '2 Passes')
         self.comboBox_checkbadblocks.insertItem(2, '3 Passes')
@@ -155,28 +158,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.comboBox_filesystem.setEnabled(True)
             self.comboBox_clustersize.setEnabled(True)
             self.lineEdit_label.setEnabled(True)
-            # The current index for the bootmethod comboBox is stored before
-            # its update and restored afterwards.
-
-            bootmethod_current_index = self.comboBox_bootmethod.currentIndex()
-            if bootmethod_current_index == -1:
-                bootmethod_current_index = 0
-            self.comboBox_bootmethod.clear()
-            self.comboBox_bootmethod.insertItem(0, 'ISO Image')
-            self.comboBox_bootmethod.insertItem(1, 'DD Image')
-            self.comboBox_bootmethod.insertItem(2, 'UEFI:NTFS')
-            if self.comboBox_partscheme.currentText() == 'MBR partition scheme for BIOS or UEFI':
-                self.comboBox_bootmethod.insertItem(3, 'FreeDOS')
-                self.comboBox_bootmethod.insertItem(4, 'Syslinux 4')
-                self.comboBox_bootmethod.insertItem(5, 'Syslinux 6')
-                self.comboBox_bootmethod.insertItem(6, 'ReactOS')
-                self.comboBox_bootmethod.insertItem(7, 'Grub 2')
-                self.comboBox_bootmethod.insertItem(8, 'Grub4DOS')
-            self.comboBox_bootmethod.setCurrentIndex(0)
-            if bootmethod_current_index <= self.comboBox_bootmethod.count():
-                # As the number of valid indexes may vary, the stored index is
-                # only restored if it is valid. Otherwise it is set to 0.
-                self.comboBox_bootmethod.setCurrentIndex(bootmethod_current_index)
 
             # The current index for the cluster size comboBox is stored before
             # its update and restored afterwards.
