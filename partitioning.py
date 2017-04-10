@@ -55,8 +55,11 @@ def create_partition_wrapper(device, fs_type):
         create_partition(device)
 
 
-def mark_bootable(device):
-    subprocess.run(['parted', '-s', '/dev/' + device, 'set', '1', 'boot', 'on'])
+def mark_bootable(device, partition_table):
+    if partition_table.lower() == 'mbr':
+        subprocess.run(['parted', '-s', '/dev/' + device, 'set', '1', 'boot', 'on'])
+    elif partition_table.lower() == 'gpt':
+        subprocess.run(['parted', '-s', '/dev/' + device, 'set', '1', 'legacy_boot', 'on'])
 
 
 def change_partition_name(device, name):

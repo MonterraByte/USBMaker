@@ -59,7 +59,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.comboBox_partscheme.insertItem(0, 'MBR partition scheme for BIOS or UEFI')
         self.comboBox_partscheme.insertItem(1, 'MBR partition scheme for UEFI')
-        self.comboBox_partscheme.insertItem(2, 'GPT partition scheme for UEFI')
+        self.comboBox_partscheme.insertItem(2, 'GPT partition scheme for BIOS or UEFI')
+        self.comboBox_partscheme.insertItem(3, 'GPT partition scheme for UEFI')
 
         self.comboBox_filesystem.insertItem(0, 'FAT32')
         self.comboBox_filesystem.insertItem(1, 'FAT16')
@@ -90,11 +91,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.messageBox_missingsyslinux.setIcon(QtWidgets.QMessageBox.Warning)
 
         if os.path.exists('/usr/lib/syslinux/bios/mbr.bin'):
-            self.syslinux_mbr = '/usr/lib/syslinux/bios/mbr.bin'
+            self.syslinux_mbr = '/usr/lib/syslinux/bios'
         elif os.path.exists('/usr/lib/syslinux/mbr/mbr.bin'):
-            self.syslinux_mbr = '/usr/lib/syslinux/mbr/mbr.bin'
+            self.syslinux_mbr = '/usr/lib/syslinux/mbr'
         elif os.path.exists('/usr/share/syslinux/mbr.bin'):
-            self.syslinux_mbr = '/usr/share/syslinux/mbr.bin'
+            self.syslinux_mbr = '/usr/share/syslinux'
         else:
             self.syslinux_mbr = ''
             self.show_missingsyslinux_messagebox()
@@ -343,8 +344,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
             device = usb_info.get_block_device_name(device_id)
 
-            if self.comboBox_partscheme.currentIndex() == 0:
-                target = 'bios'
+            if self.comboBox_partscheme.currentIndex() == 0 or self.comboBox_partscheme.currentIndex() == 2:
+                target = 'both'
             else:
                 target = 'uefi'
 
@@ -475,13 +476,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                         self.progressBar.setValue(80)
 
                         # Make the usb bootable.
-                        iso.create_bootable_usb(device, usb_mountpoint, bootloader, target, self.syslinux_mbr)
+                        iso.create_bootable_usb(device, usb_mountpoint, bootloader, target, partition_table,
+                                                self.syslinux_mbr)
 
                         # Unmount the usb drive.
                         mount.unmount(usb_mountpoint)
 
-                        if target == 'bios':
-                            partitioning.mark_bootable(device)
+                        if target == 'both':
+                            partitioning.mark_bootable(device, partition_table)
 
                         self.label_status.setText('Completed.')
                         self.progressBar.setValue(100)

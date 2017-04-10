@@ -67,13 +67,14 @@ def copy_iso_contents(iso_mountpoint, device_mountpoint):
     os.sync()
 
 
-def create_bootable_usb(device, device_mountpoint, bootloader, target='uefi', syslinux_mbr='/usr/lib/syslinux/bios/mbr.bin'):
+def create_bootable_usb(device, device_mountpoint, bootloader, target, partition_table,
+                        syslinux_mbr='/usr/lib/syslinux/bios'):
     if target.lower() != 'uefi':
         if bootloader[1] == 'syslinux':
-            install_syslinux(device, device_mountpoint, syslinux_mbr)
+            install_syslinux(device, device_mountpoint, partition_table, syslinux_mbr)
 
 
-def install_syslinux(device, device_mountpoint, syslinux_mbr):
+def install_syslinux(device, device_mountpoint, partition_table, syslinux_mbr):
     # Change the config files from ISOLINUX to SYSLINUX.
     # SYSLINUX searches for its config file in "/boot/syslinux", "/syslinux" and "/",
     # by this order.
@@ -108,4 +109,7 @@ def install_syslinux(device, device_mountpoint, syslinux_mbr):
     subprocess.run(['extlinux', '--install', device_mountpoint])
 
     # Install SYSLINUX to the MBR.
-    subprocess.run(['dd', 'bs=440', 'count=1', 'if=' + syslinux_mbr, 'of=/dev/' + device])
+    if partition_table == 'gpt':
+        subprocess.run(['dd', 'bs=440', 'count=1', 'if=' + syslinux_mbr + '/gptmbr.bin', 'of=/dev/' + device])
+    else:
+        subprocess.run(['dd', 'bs=440', 'count=1', 'if=' + syslinux_mbr + '/mbr.bin', 'of=/dev/' + device])
