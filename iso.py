@@ -18,6 +18,7 @@
 import os
 import distutils.dir_util
 import subprocess
+import shutil
 
 # os.symlink raises a PermissionError when creating symlinks
 # on filesystems that don't support them (FAT32, for example).
@@ -67,14 +68,140 @@ def copy_iso_contents(iso_mountpoint, device_mountpoint):
     os.sync()
 
 
-def create_bootable_usb(device, device_mountpoint, bootloader, target, partition_table,
-                        syslinux_mbr='/usr/lib/syslinux/bios'):
-    if target.lower() != 'uefi':
-        if bootloader[1] == 'syslinux':
-            install_syslinux(device, device_mountpoint, partition_table, syslinux_mbr)
+def create_bootable_usb(device, device_mountpoint, bootloader, target, partition_table, syslinux):
+    if bootloader[0].lower() == 'syslinux' or bootloader[1].lower() == 'syslinux':
+        isolinux_to_syslinux(device_mountpoint)
+    if target.lower() == 'both':
+        if bootloader[0].lower() == 'syslinux':
+            install_syslinux(device, device_mountpoint, 'uefi', partition_table, syslinux)
+        if bootloader[1].lower() == 'syslinux':
+            install_syslinux(device, device_mountpoint, 'bios', partition_table, syslinux)
+    elif target.lower() == 'bios':
+        if bootloader[1].lower() == 'syslinux':
+            install_syslinux(device, device_mountpoint, 'bios', partition_table, syslinux)
+    elif target.lower() == 'uefi':
+        if bootloader[0].lower() == 'syslinux':
+            install_syslinux(device, device_mountpoint, 'uefi', partition_table, syslinux)
 
 
-def install_syslinux(device, device_mountpoint, partition_table, syslinux_mbr):
+def install_syslinux(device, device_mountpoint, target, partition_table, syslinux):
+    if target == 'bios':
+        # Install SYSLINUX to the partition.
+        subprocess.run(['extlinux', '--install', device_mountpoint])
+
+        # Install SYSLINUX to the MBR.
+        if partition_table == 'gpt':
+            subprocess.run(['dd', 'bs=440', 'count=1', 'if=' + syslinux[0] + '/gptmbr.bin', 'of=/dev/' + device])
+        else:
+            subprocess.run(['dd', 'bs=440', 'count=1', 'if=' + syslinux[0] + '/mbr.bin', 'of=/dev/' + device])
+    elif target == 'uefi':
+        # Create directories if they are not present.
+        if not os.path.isdir(device_mountpoint + '/efi'):
+            os.makedirs(device_mountpoint + '/efi')
+
+        if not os.path.isdir(device_mountpoint + '/efi/boot'):
+            os.makedirs(device_mountpoint + '/efi/boot')
+
+        # Copy the UEFI bootloader.
+        shutil.copy(syslinux[1] + '/syslinux.efi', device_mountpoint + '/efi/boot/bootx64.efi')
+        shutil.copy(syslinux[2] + '/syslinux.efi', device_mountpoint + '/efi/boot/bootia32.efi')
+
+        shutil.copy(syslinux[1] + '/ldlinux.e64', device_mountpoint + '/efi/boot/ldlinux.e64')
+        shutil.copy(syslinux[2] + '/ldlinux.e32', device_mountpoint + '/efi/boot/ldlinux.e32')
+
+        # Copy the modules.
+        if not os.path.isdir(device_mountpoint + '/efi/boot/efi64'):
+            os.makedirs(device_mountpoint + '/efi/boot/efi64')
+
+        if not os.path.isdir(device_mountpoint + '/efi/boot/efi32'):
+            os.makedirs(device_mountpoint + '/efi/boot/efi32')
+
+        for file in os.listdir(syslinux[1]):
+            if file[-4:] == '.c32':
+                shutil.copy(syslinux[1] + '/' + file, device_mountpoint + '/efi/boot/efi64/' + file)
+
+        for file in os.listdir(syslinux[2]):
+            if file[-4:] == '.c32':
+                shutil.copy(syslinux[2] + '/' + file, device_mountpoint + '/efi/boot/efi32/' + file)
+
+        # Create the config file.
+        if not os.path.exists(device_mountpoint + '/efi/boot/syslinux.cfg'):
+            if os.path.exists(device_mountpoint + '/boot/syslinux/syslinux.cfg'):
+                # /boot/syslinux/syslinux.cfg
+                with open(device_mountpoint + '/efi/boot/syslinux.cfg', mode='w', encoding='utf_8', newline='\n') as \
+                        syslinux_conf:
+                    syslinux_conf.write('PATH ./efi64\nINCLUDE /boot/syslinux/syslinux.cfg\n')
+
+            elif os.path.exists(device_mountpoint + '/syslinux/syslinux.cfg'):
+                # /syslinux/syslinux.cfg
+                with open(device_mountpoint + '/efi/boot/syslinux.cfg', mode='w', encoding='utf_8', newline='\n') as \
+                        syslinux_conf:
+                    syslinux_conf.write('PATH ./efi64\nINCLUDE /syslinux/syslinux.cfg\n')
+
+            elif os.path.exists(device_mountpoint + '/syslinux.cfg'):
+                # /syslinux.cfg
+                with open(device_mountpoint + '/efi/boot/syslinux.cfg', mode='w', encoding='utf_8', newline='\n') as \
+                        syslinux_conf:
+                    syslinux_conf.write('PATH ./efi64\nINCLUDE /syslinux.cfg\n')
+            created_new_conf = True
+        else:
+            created_new_conf = False
+
+        # Config file for x64 (Syslinux 6.04+).
+        if not os.path.exists(device_mountpoint + '/efi/boot/syslx64.cfg'):
+            # /efi/boot/syslinux.cfg
+            if not created_new_conf:
+                # Use original config file.
+                with open(device_mountpoint + '/efi/boot/syslx64.cfg', mode='w', encoding='utf_8', newline='\n') as \
+                        syslinux_conf:
+                    syslinux_conf.write('PATH ./efi64\nINCLUDE /efi/boot/syslinux.cfg\n')
+
+            # /boot/syslinux/syslinux.cfg
+            elif os.path.exists(device_mountpoint + '/boot/syslinux/syslinux.cfg'):
+                with open(device_mountpoint + '/efi/boot/syslx64.cfg', mode='w', encoding='utf_8', newline='\n') as \
+                        syslinux_conf:
+                    syslinux_conf.write('PATH ./efi64\nINCLUDE /boot/syslinux/syslinux.cfg\n')
+
+            # /syslinux/syslinux.cfg
+            elif os.path.exists(device_mountpoint + '/syslinux/syslinux.cfg'):
+                with open(device_mountpoint + '/efi/boot/syslx64.cfg', mode='w', encoding='utf_8', newline='\n') as \
+                        syslinux_conf:
+                    syslinux_conf.write('PATH ./efi64\nINCLUDE /syslinux/syslinux.cfg\n')
+
+            # /syslinux.cfg
+            elif os.path.exists(device_mountpoint + '/syslinux.cfg'):
+                with open(device_mountpoint + '/efi/boot/syslx64.cfg', mode='w', encoding='utf_8', newline='\n') as \
+                        syslinux_conf:
+                    syslinux_conf.write('PATH ./efi64\nINCLUDE /syslinux.cfg\n')
+
+        if not os.path.exists(device_mountpoint + '/efi/boot/syslia32.cfg'):
+            # /efi/boot/syslinux.cfg
+            if not created_new_conf:
+                # Use original config file.
+                with open(device_mountpoint + '/efi/boot/syslia32.cfg', mode='w', encoding='utf_8', newline='\n') as \
+                        syslinux_conf:
+                    syslinux_conf.write('PATH ./efi32\nINCLUDE /efi/boot/syslinux.cfg\n')
+
+            # /boot/syslinux/syslinux.cfg
+            elif os.path.exists(device_mountpoint + '/boot/syslinux/syslinux.cfg'):
+                with open(device_mountpoint + '/efi/boot/syslia32.cfg', mode='w', encoding='utf_8', newline='\n') as \
+                        syslinux_conf:
+                    syslinux_conf.write('PATH ./efi32\nINCLUDE /boot/syslinux/syslinux.cfg\n')
+
+            # /syslinux/syslinux.cfg
+            elif os.path.exists(device_mountpoint + '/syslinux/syslinux.cfg'):
+                with open(device_mountpoint + '/efi/boot/syslia32.cfg', mode='w', encoding='utf_8', newline='\n') as \
+                        syslinux_conf:
+                    syslinux_conf.write('PATH ./efi32\nINCLUDE /syslinux/syslinux.cfg\n')
+
+            # /syslinux.cfg
+            elif os.path.exists(device_mountpoint + '/syslinux.cfg'):
+                with open(device_mountpoint + '/efi/boot/syslia32.cfg', mode='w', encoding='utf_8', newline='\n') as \
+                        syslinux_conf:
+                    syslinux_conf.write('PATH ./efi32\nINCLUDE /syslinux.cfg\n')
+
+
+def isolinux_to_syslinux(device_mountpoint):
     # Change the config files from ISOLINUX to SYSLINUX.
     # SYSLINUX searches for its config file in "/boot/syslinux", "/syslinux" and "/",
     # by this order.
@@ -104,12 +231,3 @@ def install_syslinux(device, device_mountpoint, partition_table, syslinux_mbr):
             if os.path.exists(device_mountpoint + '/isolinux.cfg') and \
                     not os.path.exists(device_mountpoint + '/syslinux.cfg'):
                 os.rename(device_mountpoint + '/isolinux.cfg', device_mountpoint + '/syslinux.cfg')
-
-    # Install SYSLINUX to the partition.
-    subprocess.run(['extlinux', '--install', device_mountpoint])
-
-    # Install SYSLINUX to the MBR.
-    if partition_table == 'gpt':
-        subprocess.run(['dd', 'bs=440', 'count=1', 'if=' + syslinux_mbr + '/gptmbr.bin', 'of=/dev/' + device])
-    else:
-        subprocess.run(['dd', 'bs=440', 'count=1', 'if=' + syslinux_mbr + '/mbr.bin', 'of=/dev/' + device])

@@ -90,14 +90,32 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             .setText('Syslinux was not found.\nThe creation of bootable drives with an ISO image may not work.')
         self.messageBox_missingsyslinux.setIcon(QtWidgets.QMessageBox.Warning)
 
+        self.syslinux = ['', '', '']
+
         if os.path.exists('/usr/lib/syslinux/bios/mbr.bin'):
-            self.syslinux_mbr = '/usr/lib/syslinux/bios'
+            self.syslinux[0] = '/usr/lib/syslinux/bios'
         elif os.path.exists('/usr/lib/syslinux/mbr/mbr.bin'):
-            self.syslinux_mbr = '/usr/lib/syslinux/mbr'
+            self.syslinux[0] = '/usr/lib/syslinux/mbr'
         elif os.path.exists('/usr/share/syslinux/mbr.bin'):
-            self.syslinux_mbr = '/usr/share/syslinux'
+            self.syslinux[0] = '/usr/share/syslinux'
         else:
-            self.syslinux_mbr = ''
+            self.syslinux[0] = ''
+            self.show_missingsyslinux_messagebox()
+
+        if os.path.exists('/usr/lib/syslinux/efi64/syslinux.efi'):
+            self.syslinux[1] = '/usr/lib/syslinux/efi64'
+        elif os.path.exists('/usr/lib/SYSLINUX.EFI/efi64/syslinux.efi'):
+            self.syslinux[1] = '/usr/lib/SYSLINUX.EFI/efi64'
+        else:
+            self.syslinux_[1] = ''
+            self.show_missingsyslinux_messagebox()
+
+        if os.path.exists('/usr/lib/syslinux/efi32/syslinux.efi'):
+            self.syslinux[2] = '/usr/lib/syslinux/efi32'
+        elif os.path.exists('/usr/lib/SYSLINUX.EFI/efi32/syslinux.efi'):
+            self.syslinux[2] = '/usr/lib/SYSLINUX.EFI/efi32'
+        else:
+            self.syslinux[2] = ''
             self.show_missingsyslinux_messagebox()
 
         # The badblocks message box is initialized here.
@@ -477,7 +495,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
                         # Make the usb bootable.
                         iso.create_bootable_usb(device, usb_mountpoint, bootloader, target, partition_table,
-                                                self.syslinux_mbr)
+                                                self.syslinux)
 
                         # Unmount the usb drive.
                         mount.unmount(usb_mountpoint)
