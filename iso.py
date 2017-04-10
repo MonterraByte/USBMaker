@@ -40,6 +40,27 @@ def _symlink(source, link_name, target_is_directory=False, dir_fd=None):
 # os.symlink = _symlink
 
 
+def get_bios_bootloader_name(iso_mountpoint):
+    if os.path.exists(iso_mountpoint + '/boot/isolinux') or os.path.exists(iso_mountpoint + '/boot/syslinux') or \
+       os.path.exists(iso_mountpoint + '/syslinux') or os.path.exists(iso_mountpoint + '/isolinux') or \
+       os.path.exists(iso_mountpoint + '/syslinux.cfg') or os.path.exists(iso_mountpoint + '/isolinux.cfg'):
+        return 'syslinux'
+    elif os.path.exists(iso_mountpoint + '/grub/grldr'):
+        return 'grub4dos'
+    else:
+        return 'unknown'
+
+
+def get_uefi_bootloader_name(iso_mountpoint):
+    if os.path.exists(iso_mountpoint + '/boot/grub/grub.cfg') or \
+            os.path.exists(iso_mountpoint + '/efi/boot/grub.cfg'):
+        return 'grub2'
+    elif os.path.exists(iso_mountpoint + '/loader/loader.conf'):
+        return 'systemd-boot'
+    else:
+        return 'unknown'
+
+
 def copy_iso_contents(iso_mountpoint, device_mountpoint):
     os.symlink = _symlink
     distutils.dir_util.copy_tree(iso_mountpoint, device_mountpoint, preserve_symlinks=1)
