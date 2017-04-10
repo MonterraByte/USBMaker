@@ -75,13 +75,12 @@ def create_bootable_usb(device, device_mountpoint, target='uefi', syslinux_mbr='
 
 def install_syslinux(device, device_mountpoint, syslinux_mbr):
     # Change the config files from ISOLINUX to SYSLINUX.
-    if os.path.exists(device_mountpoint + '/isolinux') and not os.path.exists(device_mountpoint + '/syslinux'):
-        os.rename(device_mountpoint + '/isolinux', device_mountpoint + '/syslinux')
+    # SYSLINUX searches for its config file in "/boot/syslinux", "/syslinux" and "/",
+    # by this order.
+    # The only config file changed should be the first one detected,
+    # in order to reduce the modifications made to the iso file's content.
 
-    if os.path.exists(device_mountpoint + '/syslinux/isolinux.cfg') and not \
-            os.path.exists(device_mountpoint + '/syslinux/syslinux.cfg'):
-        os.rename(device_mountpoint + '/syslinux/isolinux.cfg', device_mountpoint + '/syslinux/syslinux.cfg')
-
+    # /boot/syslinux
     if os.path.exists(device_mountpoint + '/boot/isolinux') and not \
             os.path.exists(device_mountpoint + '/boot/syslinux'):
         os.rename(device_mountpoint + '/boot/isolinux', device_mountpoint + '/boot/syslinux')
@@ -90,8 +89,20 @@ def install_syslinux(device, device_mountpoint, syslinux_mbr):
             os.path.exists(device_mountpoint + '/boot/syslinux/syslinux.cfg'):
         os.rename(device_mountpoint + '/boot/syslinux/isolinux.cfg', device_mountpoint + '/boot/syslinux/syslinux.cfg')
 
-    if os.path.exists(device_mountpoint + '/isolinux.cfg') and not os.path.exists(device_mountpoint + '/syslinux.cfg'):
-        os.rename(device_mountpoint + '/isolinux.cfg', device_mountpoint + '/syslinux.cfg')
+    # /syslinux
+    if not os.path.exists(device_mountpoint + '/boot/syslinux/syslinux.cfg'):
+        if os.path.exists(device_mountpoint + '/isolinux') and not os.path.exists(device_mountpoint + '/syslinux'):
+            os.rename(device_mountpoint + '/isolinux', device_mountpoint + '/syslinux')
+
+        if os.path.exists(device_mountpoint + '/syslinux/isolinux.cfg') and not \
+                os.path.exists(device_mountpoint + '/syslinux/syslinux.cfg'):
+            os.rename(device_mountpoint + '/syslinux/isolinux.cfg', device_mountpoint + '/syslinux/syslinux.cfg')
+
+        # /
+        if not os.path.exists(device_mountpoint + '/syslinux/syslinux.cfg'):
+            if os.path.exists(device_mountpoint + '/isolinux.cfg') and \
+                    not os.path.exists(device_mountpoint + '/syslinux.cfg'):
+                os.rename(device_mountpoint + '/isolinux.cfg', device_mountpoint + '/syslinux.cfg')
 
     # Install SYSLINUX to the partition.
     subprocess.run(['extlinux', '--install', device_mountpoint])
