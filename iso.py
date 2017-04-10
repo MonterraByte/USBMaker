@@ -35,12 +35,13 @@ def _symlink(source, link_name, target_is_directory=False, dir_fd=None):
     except PermissionError:
         pass
 
-# Any function (distutils.dir_util.copy_tree in particular) that
-# uses os.symlink will use the _symlink function instead.
-os.symlink = _symlink
+# This makes any function (distutils.dir_util.copy_tree in particular)
+# that uses os.symlink use the _symlink function instead:
+# os.symlink = _symlink
 
 
 def copy_iso_contents(iso_mountpoint, device_mountpoint):
+    os.symlink = _symlink
     distutils.dir_util.copy_tree(iso_mountpoint, device_mountpoint, preserve_symlinks=1)
     os.sync()
 
