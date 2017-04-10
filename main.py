@@ -379,6 +379,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             else:
                 clustersize = ''
 
+            iso_mountpoint = '/tmp/usbmaker' + str(self.pid) + '-iso'
+            mount.mount_iso(self.filename, iso_mountpoint)
+            bootloader = [iso.get_uefi_bootloader_name(iso_mountpoint), iso.get_bios_bootloader_name(iso_mountpoint)]
+            mount.unmount(iso_mountpoint)
+
             if self.checkBox_bootmethod.isChecked():
                 if self.filename != '':
                     if self.comboBox_bootmethod.currentText() == 'DD Image':
@@ -470,7 +475,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                         self.progressBar.setValue(80)
 
                         # Make the usb bootable.
-                        iso.create_bootable_usb(device, usb_mountpoint, target, self.syslinux_mbr)
+                        iso.create_bootable_usb(device, usb_mountpoint, bootloader, target, self.syslinux_mbr)
 
                         # Unmount the usb drive.
                         mount.unmount(usb_mountpoint)

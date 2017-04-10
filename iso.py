@@ -67,9 +67,9 @@ def copy_iso_contents(iso_mountpoint, device_mountpoint):
     os.sync()
 
 
-def create_bootable_usb(device, device_mountpoint, target='uefi', syslinux_mbr='/usr/lib/syslinux/bios/mbr.bin'):
+def create_bootable_usb(device, device_mountpoint, bootloader, target='uefi', syslinux_mbr='/usr/lib/syslinux/bios/mbr.bin'):
     if target.lower() != 'uefi':
-        if os.path.isdir(device_mountpoint + '/isolinux'):
+        if bootloader[1] == 'syslinux':
             install_syslinux(device, device_mountpoint, syslinux_mbr)
 
 
