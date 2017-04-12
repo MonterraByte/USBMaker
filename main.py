@@ -90,7 +90,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             .setText('Syslinux was not found.\nThe creation of bootable drives with an ISO image may not work.')
         self.messageBox_missingsyslinux.setIcon(QtWidgets.QMessageBox.Warning)
 
+        # self.syslinux contains the path to the directory containing the
+        # syslinux mbr and the efi executables, in this format: [bios, efi64, efi32]
+        # self.syslinux_modules contains the path to the module directory
+        # in the format: [bios, efi64, efi32]
         self.syslinux = ['', '', '']
+        self.syslinux_modules = ['', '', '']
+
+        # MBR and EFI executables
 
         if os.path.exists('/usr/lib/syslinux/bios/mbr.bin'):
             self.syslinux[0] = '/usr/lib/syslinux/bios'
@@ -116,6 +123,55 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.syslinux[2] = '/usr/lib/SYSLINUX.EFI/efi32'
         else:
             self.syslinux[2] = ''
+            self.show_missingsyslinux_messagebox()
+
+        # Modules
+
+        if os.path.isdir('/usr/lib/syslinux/bios'):
+            for file in os.listdir('/usr/lib/syslinux/bios'):
+                if re.search('c32', file):
+                    self.syslinux_modules[0] = '/usr/lib/syslinux/bios'
+                    break
+        elif os.path.isdir('/usr/lib/syslinux/modules/bios'):
+            for file in os.listdir('/usr/lib/syslinux/modules/bios'):
+                if re.search('c32', file):
+                    self.syslinux_modules[0] = '/usr/lib/syslinux/modules/bios'
+                    break
+        elif os.path.isdir('/usr/share/syslinux'):
+            for file in os.listdir('/usr/share/syslinux'):
+                if re.search('c32', file):
+                    self.syslinux_modules[0] = '/usr/share/syslinux'
+                    break
+        else:
+            self.syslinux_modules[0] = ''
+            self.show_missingsyslinux_messagebox()
+
+        if os.path.isdir('/usr/lib/syslinux/efi64'):
+            for file in os.listdir('/usr/lib/syslinux/efi64'):
+                if re.search('c32', file):
+                    self.syslinux_modules[1] = '/usr/lib/syslinux/efi64'
+                    break
+        elif os.path.isdir('/usr/lib/syslinux/modules/efi64'):
+            for file in os.listdir('/usr/lib/syslinux/modules/efi64'):
+                if re.search('c32', file):
+                    self.syslinux_modules[1] = '/usr/lib/syslinux/modules/efi64'
+                    break
+        else:
+            self.syslinux_modules[1] = ''
+            self.show_missingsyslinux_messagebox()
+
+        if os.path.isdir('/usr/lib/syslinux/efi32'):
+            for file in os.listdir('/usr/lib/syslinux/efi32'):
+                if re.search('c32', file):
+                    self.syslinux_modules[2] = '/usr/lib/syslinux/efi32'
+                    break
+        elif os.path.isdir('/usr/lib/syslinux/modules/efi32'):
+            for file in os.listdir('/usr/lib/syslinux/modules/efi32'):
+                if re.search('c32', file):
+                    self.syslinux_modules[2] = '/usr/lib/syslinux/modules/efi32'
+                    break
+        else:
+            self.syslinux_modules[2] = ''
             self.show_missingsyslinux_messagebox()
 
         # The badblocks message box is initialized here.
@@ -495,7 +551,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
                         # Make the usb bootable.
                         iso.create_bootable_usb(device, usb_mountpoint, bootloader, target, partition_table,
-                                                self.syslinux)
+                                                self.syslinux, self.syslinux_modules)
 
                         # Unmount the usb drive.
                         mount.unmount(usb_mountpoint)

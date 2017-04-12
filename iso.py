@@ -68,23 +68,23 @@ def copy_iso_contents(iso_mountpoint, device_mountpoint):
     os.sync()
 
 
-def create_bootable_usb(device, device_mountpoint, bootloader, target, partition_table, syslinux):
+def create_bootable_usb(device, device_mountpoint, bootloader, target, partition_table, syslinux, syslinux_modules):
     if bootloader[0].lower() == 'syslinux' or bootloader[1].lower() == 'syslinux':
         isolinux_to_syslinux(device_mountpoint)
     if target.lower() == 'both':
         if bootloader[0].lower() == 'syslinux':
-            install_syslinux(device, device_mountpoint, 'uefi', partition_table, syslinux)
+            install_syslinux(device, device_mountpoint, 'uefi', partition_table, syslinux, syslinux_modules)
         if bootloader[1].lower() == 'syslinux':
-            install_syslinux(device, device_mountpoint, 'bios', partition_table, syslinux)
+            install_syslinux(device, device_mountpoint, 'bios', partition_table, syslinux, syslinux_modules)
     elif target.lower() == 'bios':
         if bootloader[1].lower() == 'syslinux':
-            install_syslinux(device, device_mountpoint, 'bios', partition_table, syslinux)
+            install_syslinux(device, device_mountpoint, 'bios', partition_table, syslinux, syslinux_modules)
     elif target.lower() == 'uefi':
         if bootloader[0].lower() == 'syslinux':
-            install_syslinux(device, device_mountpoint, 'uefi', partition_table, syslinux)
+            install_syslinux(device, device_mountpoint, 'uefi', partition_table, syslinux, syslinux_modules)
 
 
-def install_syslinux(device, device_mountpoint, target, partition_table, syslinux):
+def install_syslinux(device, device_mountpoint, target, partition_table, syslinux, syslinux_modules):
     if target == 'bios':
         # Install SYSLINUX to the partition.
         subprocess.run(['extlinux', '--install', device_mountpoint])
@@ -116,13 +116,13 @@ def install_syslinux(device, device_mountpoint, target, partition_table, syslinu
         if not os.path.isdir(device_mountpoint + '/efi/boot/efi32'):
             os.makedirs(device_mountpoint + '/efi/boot/efi32')
 
-        for file in os.listdir(syslinux[1]):
+        for file in os.listdir(syslinux_modules[1]):
             if file[-4:] == '.c32':
-                shutil.copy(syslinux[1] + '/' + file, device_mountpoint + '/efi/boot/efi64/' + file)
+                shutil.copy(syslinux_modules[1] + '/' + file, device_mountpoint + '/efi/boot/efi64/' + file)
 
-        for file in os.listdir(syslinux[2]):
+        for file in os.listdir(syslinux_modules[2]):
             if file[-4:] == '.c32':
-                shutil.copy(syslinux[2] + '/' + file, device_mountpoint + '/efi/boot/efi32/' + file)
+                shutil.copy(syslinux_modules[2] + '/' + file, device_mountpoint + '/efi/boot/efi32/' + file)
 
         # Create the config file.
         if not os.path.exists(device_mountpoint + '/efi/boot/syslinux.cfg'):
