@@ -56,7 +56,7 @@ def create_partition_wrapper(device, fs_type):
 
 
 def mark_bootable(device, partition_table):
-    if partition_table.lower() == 'mbr':
+    if partition_table.lower() == 'msdos':
         subprocess.run(['parted', '-s', '/dev/' + device, 'set', '1', 'boot', 'on'])
     elif partition_table.lower() == 'gpt':
         subprocess.run(['parted', '-s', '/dev/' + device, 'set', '1', 'legacy_boot', 'on'])
