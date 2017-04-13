@@ -86,6 +86,17 @@ def create_bootable_usb(device, device_mountpoint, bootloader, target, partition
 
 def install_syslinux(device, device_mountpoint, target, partition_table, syslinux, syslinux_modules):
     if target == 'bios':
+
+        # Copy the modules
+        if os.path.isdir(device_mountpoint + '/boot/syslinux'):
+            for file in os.listdir(syslinux_modules[0]):
+                if file[-4:] == '.c32':
+                    shutil.copy(syslinux_modules[0] + '/' + file, device_mountpoint + '/boot/syslinux/' + file)
+        elif os.path.isdir(device_mountpoint + '/syslinux'):
+            for file in os.listdir(syslinux_modules[0]):
+                if file[-4:] == '.c32':
+                    shutil.copy(syslinux_modules[0] + '/' + file, device_mountpoint + '/syslinux/' + file)
+
         # Install SYSLINUX to the partition.
         subprocess.run(['extlinux', '--install', device_mountpoint])
 
