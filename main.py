@@ -156,6 +156,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 if re.search('c32', file):
                     self.syslinux_modules[1] = '/usr/lib/syslinux/modules/efi64'
                     break
+        elif os.path.isdir('/usr/share/syslinux/efi64'):
+            for file in os.listdir('/usr/share/syslinux/efi64'):
+                if re.search('c32', file):
+                    self.syslinux_modules[1] = '/usr/share/syslinux/efi64'
+                    break
         else:
             self.syslinux_modules[1] = ''
             self.show_missingsyslinux_messagebox()
@@ -169,6 +174,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             for file in os.listdir('/usr/lib/syslinux/modules/efi32'):
                 if re.search('c32', file):
                     self.syslinux_modules[2] = '/usr/lib/syslinux/modules/efi32'
+                    break
+        elif os.path.isdir('/usr/share/syslinux/efi32'):
+            for file in os.listdir('/usr/share/syslinux/efi32'):
+                if re.search('c32', file):
+                    self.syslinux_modules[1] = '/usr/share/syslinux/efi32'
                     break
         else:
             self.syslinux_modules[2] = ''
