@@ -19,6 +19,7 @@ import os
 import distutils.dir_util
 import subprocess
 import shutil
+import platform
 
 # os.symlink raises a PermissionError when creating symlinks
 # on filesystems that don't support them (FAT32, for example).
@@ -68,20 +69,49 @@ def copy_iso_contents(iso_mountpoint, device_mountpoint):
     os.sync()
 
 
-def create_bootable_usb(device, device_mountpoint, bootloader, target, partition_table, syslinux, syslinux_modules):
+def create_bootable_usb(device, device_mountpoint, bootloader, target, partition_table, syslinux, syslinux_modules,
+                        grldr):
     if bootloader[0].lower() == 'syslinux' or bootloader[1].lower() == 'syslinux':
         isolinux_to_syslinux(device_mountpoint)
     if target.lower() == 'both':
         if bootloader[0].lower() == 'syslinux':
             install_syslinux(device, device_mountpoint, 'uefi', partition_table, syslinux, syslinux_modules)
+
         if bootloader[1].lower() == 'syslinux':
             install_syslinux(device, device_mountpoint, 'bios', partition_table, syslinux, syslinux_modules)
+        elif bootloader[1].lower() == 'grub4dos':
+            install_grub4dos(device, device_mountpoint, partition_table, grldr)
     elif target.lower() == 'bios':
         if bootloader[1].lower() == 'syslinux':
             install_syslinux(device, device_mountpoint, 'bios', partition_table, syslinux, syslinux_modules)
     elif target.lower() == 'uefi':
         if bootloader[0].lower() == 'syslinux':
             install_syslinux(device, device_mountpoint, 'uefi', partition_table, syslinux, syslinux_modules)
+
+
+def install_grub4dos(device, device_mountpoint, partition_table, grldr):
+    # Copy grldr.
+    shutil.copy(grldr, device_mountpoint + '/grldr')
+
+    # Install the MBR.
+    if partition_table == 'gpt':
+        if platform.architecture()[0] == '64bit':
+            # Only use bootlace64.com if system is 64-bit.
+            try:
+                subprocess.run(['bootlace64.com', '--no-backup-mbr', '--mbr-disable-floppy', '--gpt', '/dev/' + device])
+            except FileNotFoundError:
+                subprocess.run(['bootlace.com', '--no-backup-mbr', '--mbr-disable-floppy', '--gpt', '/dev/' + device])
+        else:
+            subprocess.run(['bootlace.com', '--no-backup-mbr', '--mbr-disable-floppy', '--gpt', '/dev/' + device])
+    else:
+        if platform.architecture()[0] == '64bit':
+            # Only use bootlace64.com if system is 64-bit.
+            try:
+                subprocess.run(['bootlace64.com', '--no-backup-mbr', '--mbr-disable-floppy', '/dev/' + device])
+            except FileNotFoundError:
+                subprocess.run(['bootlace.com', '--no-backup-mbr', '--mbr-disable-floppy', '/dev/' + device])
+        else:
+            subprocess.run(['bootlace.com', '--no-backup-mbr', '--mbr-disable-floppy', '/dev/' + device])
 
 
 def install_syslinux(device, device_mountpoint, target, partition_table, syslinux, syslinux_modules):

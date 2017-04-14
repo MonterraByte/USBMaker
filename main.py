@@ -20,6 +20,7 @@ import sys
 import os
 import re
 import subprocess
+import shutil
 from PyQt5 import QtWidgets, QtCore
 from gui import Ui_MainWindow
 import about
@@ -187,7 +188,32 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             syslinux_not_found = True
 
         if syslinux_not_found:
-            self.show_missingsyslinux_messagebox()
+            self.show_messagebox(self.messageBox_missingsyslinux)
+
+        # Find grub4dos
+        self.messageBox_missinggrub4dos = QtWidgets.QMessageBox()
+        self.messageBox_missinggrub4dos.setStandardButtons(QtWidgets.QMessageBox.Ok)
+
+        self.messageBox_missinggrub4dos.setWindowTitle('grub4dos is missing - USBMaker')
+        self.messageBox_missinggrub4dos\
+            .setText('grub4dos was not found.\nThe creation of bootable drives with an ISO image may not work.')
+        self.messageBox_missinggrub4dos.setIcon(QtWidgets.QMessageBox.Warning)
+
+        grub4dos_not_found = False
+
+        # Check if either bootlace.com or bootlace64.com are on PATH.
+        if shutil.which('bootlace64.com') is None or shutil.which('bootlace.com') is None:
+            grub4dos_not_found = True
+
+        # grldr
+        if os.path.exists('/grub/grldr'):
+            self.grldr = '/grub/grldr'
+        else:
+            self.grldr = ''
+            grub4dos_not_found = True
+
+        if grub4dos_not_found:
+            self.show_messagebox(self.messageBox_missinggrub4dos)
 
         # The badblocks message box is initialized here.
         self.messageBox_badblocks = QtWidgets.QMessageBox()
@@ -356,15 +382,15 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.about_window.move(x, y)
         self.about_window.show()
 
-    def show_missingsyslinux_messagebox(self):
+    def show_messagebox(self, messagebox):
         center_point_x = int(self.x() + self.width() / 2)
         center_point_y = int(self.y() + self.height() / 2)
         # The message box needs to be shown in order for width() and height()
         # to return the correct values.
-        self.messageBox_missingsyslinux.show()
-        x = int(center_point_x - self.messageBox_missingsyslinux.width() / 2)
-        y = int(center_point_y - self.messageBox_missingsyslinux.height() / 2)
-        self.messageBox_missingsyslinux.move(x, y)
+        messagebox.show()
+        x = int(center_point_x - messagebox.width() / 2)
+        y = int(center_point_y - messagebox.height() / 2)
+        messagebox.move(x, y)
 
     def show_badblocks_messagebox(self, badblocks_file):
         if os.path.getsize(badblocks_file) > 0:
@@ -566,7 +592,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
                         # Make the usb bootable.
                         iso.create_bootable_usb(device, usb_mountpoint, bootloader, target, partition_table,
-                                                self.syslinux, self.syslinux_modules)
+                                                self.syslinux, self.syslinux_modules, self.grldr)
 
                         # Unmount the usb drive.
                         mount.unmount(usb_mountpoint)
