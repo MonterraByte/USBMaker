@@ -47,7 +47,7 @@ def get_bios_bootloader_name(iso_mountpoint):
        os.path.exists(iso_mountpoint + '/syslinux') or os.path.exists(iso_mountpoint + '/isolinux') or \
        os.path.exists(iso_mountpoint + '/syslinux.cfg') or os.path.exists(iso_mountpoint + '/isolinux.cfg'):
         return 'syslinux'
-    elif os.path.exists(iso_mountpoint + '/grub/grldr'):
+    elif os.path.exists(iso_mountpoint + '/grldr') or os.path.exists(iso_mountpoint + '/menu.lst'):
         return 'grub4dos'
     else:
         return 'unknown'
