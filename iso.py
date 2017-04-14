@@ -80,6 +80,8 @@ def create_bootable_usb(device, device_mountpoint, bootloader, target, partition
     if target.lower() == 'both':
         if bootloader[0].lower() == 'syslinux':
             install_syslinux(device, device_mountpoint, 'uefi', partition_table, syslinux, syslinux_modules)
+        elif bootloader[0].lower() == 'systemd-boot':
+            install_systemd_boot(device_mountpoint)
 
         if bootloader[1].lower() == 'syslinux':
             install_syslinux(device, device_mountpoint, 'bios', partition_table, syslinux, syslinux_modules)
@@ -91,6 +93,8 @@ def create_bootable_usb(device, device_mountpoint, bootloader, target, partition
     elif target.lower() == 'uefi':
         if bootloader[0].lower() == 'syslinux':
             install_syslinux(device, device_mountpoint, 'uefi', partition_table, syslinux, syslinux_modules)
+        elif bootloader[0].lower() == 'systemd-boot':
+            install_systemd_boot(device_mountpoint)
 
 
 def install_grub4dos(device, device_mountpoint, partition_table, grldr):
@@ -276,3 +280,11 @@ def isolinux_to_syslinux(device_mountpoint):
             if os.path.exists(device_mountpoint + '/isolinux.cfg') and \
                     not os.path.exists(device_mountpoint + '/syslinux.cfg'):
                 os.rename(device_mountpoint + '/isolinux.cfg', device_mountpoint + '/syslinux.cfg')
+
+
+def install_systemd_boot(device_mountpoint):
+    if os.path.isfile('/usr/lib/systemd/boot/efi/systemd-bootx64.efi'):
+        shutil.copy('/usr/lib/systemd/boot/efi/systemd-bootx64.efi', device_mountpoint + '/boot/efi/bootx64.efi')
+
+    if os.path.isfile('/usr/lib/systemd/boot/efi/systemd-bootia32.efi'):
+        shutil.copy('/usr/lib/systemd/boot/efi/systemd-bootia32.efi', device_mountpoint + '/boot/efi/bootia32.efi')
