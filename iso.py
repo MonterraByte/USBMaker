@@ -59,6 +59,10 @@ def get_uefi_bootloader_name(iso_mountpoint):
         return 'grub2'
     elif os.path.exists(iso_mountpoint + '/loader/loader.conf'):
         return 'systemd-boot'
+    elif os.path.exists(iso_mountpoint + '/boot/isolinux') or os.path.exists(iso_mountpoint + '/boot/syslinux') or \
+            os.path.exists(iso_mountpoint + '/syslinux') or os.path.exists(iso_mountpoint + '/isolinux') or \
+            os.path.exists(iso_mountpoint + '/syslinux.cfg') or os.path.exists(iso_mountpoint + '/isolinux.cfg'):
+        return 'syslinux'
     else:
         return 'unknown'
 
