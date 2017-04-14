@@ -215,6 +215,19 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if grub4dos_not_found:
             self.show_messagebox(self.messageBox_missinggrub4dos)
 
+        # Find grub2
+        self.messageBox_missinggrub2 = QtWidgets.QMessageBox()
+        self.messageBox_missinggrub2.setStandardButtons(QtWidgets.QMessageBox.Ok)
+
+        self.messageBox_missinggrub2.setWindowTitle('GRUB2 is missing - USBMaker')
+        self.messageBox_missinggrub2 \
+            .setText('GRUB2 was not found.\nThe creation of bootable drives with an ISO image may not work.')
+        self.messageBox_missinggrub2.setIcon(QtWidgets.QMessageBox.Warning)
+
+        # Look for grub-install.
+        if shutil.which('grub-install') is None:
+            self.show_messagebox(self.messageBox_missinggrub2)
+
         # The badblocks message box is initialized here.
         self.messageBox_badblocks = QtWidgets.QMessageBox()
         self.messageBox_badblocks.setStandardButtons(QtWidgets.QMessageBox.Close)

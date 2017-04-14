@@ -80,6 +80,8 @@ def create_bootable_usb(device, device_mountpoint, bootloader, target, partition
     if target.lower() == 'both':
         if bootloader[0].lower() == 'syslinux':
             install_syslinux(device, device_mountpoint, 'uefi', partition_table, syslinux, syslinux_modules)
+        elif bootloader[0].lower() == 'grub2':
+            install_grub2(device_mountpoint)
         elif bootloader[0].lower() == 'systemd-boot':
             install_systemd_boot(device_mountpoint)
 
@@ -93,8 +95,32 @@ def create_bootable_usb(device, device_mountpoint, bootloader, target, partition
     elif target.lower() == 'uefi':
         if bootloader[0].lower() == 'syslinux':
             install_syslinux(device, device_mountpoint, 'uefi', partition_table, syslinux, syslinux_modules)
+        elif bootloader[0].lower() == 'grub2':
+            install_grub2(device_mountpoint)
         elif bootloader[0].lower() == 'systemd-boot':
             install_systemd_boot(device_mountpoint)
+
+
+def install_grub2(device_mountpoint):
+    # Create directories if they're not present.
+    if not os.path.isdir(device_mountpoint + '/boot'):
+        os.makedirs(device_mountpoint + '/boot')
+
+    if not os.path.isdir(device_mountpoint + '/boot/grub'):
+        os.makedirs(device_mountpoint + '/boot/grub')
+
+    # Copy config file from /efi/boot if it exists.
+    if os.path.isfile(device_mountpoint + '/efi/boot/grub.cfg') and not \
+       os.path.isfile(device_mountpoint + '/boot/grub/grub.cfg'):
+        shutil.copy(device_mountpoint + '/efi/boot/grub.cfg', device_mountpoint + '/boot/grub/grub.cfg')
+
+    # Install the 32-bit version.
+    subprocess.run(['grub-install', '--removable', '--bootloader-id=BOOT', '--efi-directory=' + device_mountpoint,
+                    '--boot-directory=' + device_mountpoint + '/boot', '--target=i386-efi'])
+
+    # Install the 64-bit version.
+    subprocess.run(['grub-install', '--removable', '--bootloader-id=BOOT', '--efi-directory=' + device_mountpoint,
+                    '--boot-directory=' + device_mountpoint + '/boot', '--target=x86_64-efi'])
 
 
 def install_grub4dos(device, device_mountpoint, partition_table, grldr):
