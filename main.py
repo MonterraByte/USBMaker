@@ -90,6 +90,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             .setText('Syslinux was not found.\nThe creation of bootable drives with an ISO image may not work.')
         self.messageBox_missingsyslinux.setIcon(QtWidgets.QMessageBox.Warning)
 
+        syslinux_not_found = False
+
         # self.syslinux contains the path to the directory containing the
         # syslinux mbr and the efi executables, in this format: [bios, efi64, efi32]
         # self.syslinux_modules contains the path to the module directory
@@ -107,7 +109,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.syslinux[0] = '/usr/share/syslinux'
         else:
             self.syslinux[0] = ''
-            self.show_missingsyslinux_messagebox()
+            syslinux_not_found = True
 
         if os.path.exists('/usr/lib/syslinux/efi64/syslinux.efi'):
             self.syslinux[1] = '/usr/lib/syslinux/efi64'
@@ -115,7 +117,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.syslinux[1] = '/usr/lib/SYSLINUX.EFI/efi64'
         else:
             self.syslinux_[1] = ''
-            self.show_missingsyslinux_messagebox()
+            syslinux_not_found = True
 
         if os.path.exists('/usr/lib/syslinux/efi32/syslinux.efi'):
             self.syslinux[2] = '/usr/lib/syslinux/efi32'
@@ -123,7 +125,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.syslinux[2] = '/usr/lib/SYSLINUX.EFI/efi32'
         else:
             self.syslinux[2] = ''
-            self.show_missingsyslinux_messagebox()
+            syslinux_not_found = True
 
         # Modules
 
@@ -144,7 +146,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     break
         else:
             self.syslinux_modules[0] = ''
-            self.show_missingsyslinux_messagebox()
+            syslinux_not_found = True
 
         if os.path.isdir('/usr/lib/syslinux/efi64'):
             for file in os.listdir('/usr/lib/syslinux/efi64'):
@@ -163,7 +165,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     break
         else:
             self.syslinux_modules[1] = ''
-            self.show_missingsyslinux_messagebox()
+            syslinux_not_found = True
 
         if os.path.isdir('/usr/lib/syslinux/efi32'):
             for file in os.listdir('/usr/lib/syslinux/efi32'):
@@ -182,6 +184,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     break
         else:
             self.syslinux_modules[2] = ''
+            syslinux_not_found = True
+
+        if syslinux_not_found:
             self.show_missingsyslinux_messagebox()
 
         # The badblocks message box is initialized here.
