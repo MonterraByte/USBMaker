@@ -472,11 +472,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
             device = usb_info.get_block_device_name(device_id)
 
-            if self.comboBox_partscheme.currentIndex() == 0 or self.comboBox_partscheme.currentIndex() == 2:
-                target = 'both'
-            else:
-                target = 'uefi'
-
             if self.comboBox_checkbadblocks.currentIndex() == 1:
                 num_passes = 2
             elif self.comboBox_checkbadblocks.currentIndex() == 2:
@@ -507,11 +502,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 clustersize = '65536'
             else:
                 clustersize = ''
-
-            iso_mountpoint = '/tmp/usbmaker' + str(self.pid) + '-iso'
-            mount.mount_iso(self.filename, iso_mountpoint)
-            bootloader = [iso.get_uefi_bootloader_name(iso_mountpoint), iso.get_bios_bootloader_name(iso_mountpoint)]
-            mount.unmount(iso_mountpoint)
 
             if self.checkBox_bootmethod.isChecked():
                 if self.filename != '':
@@ -546,6 +536,18 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                         self.disable_gui()
 
                         self.progressBar.setValue(0)
+
+                        # Collect information.
+                        if self.comboBox_partscheme.currentIndex() == 0 or self.comboBox_partscheme.currentIndex() == 2:
+                            target = 'both'
+                        else:
+                            target = 'uefi'
+
+                        iso_mountpoint = '/tmp/usbmaker' + str(self.pid) + '-iso'
+                        mount.mount_iso(self.filename, iso_mountpoint)
+                        bootloader = [iso.get_uefi_bootloader_name(iso_mountpoint),
+                                      iso.get_bios_bootloader_name(iso_mountpoint)]
+                        mount.unmount(iso_mountpoint)
 
                         # Unmount partitions before continuing.
                         mount.unmount_all_partitions(device)
