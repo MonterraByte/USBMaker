@@ -545,9 +545,38 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
                         iso_mountpoint = '/tmp/usbmaker' + str(self.pid) + '-iso'
                         mount.mount_iso(self.filename, iso_mountpoint)
+
                         bootloader = [iso.get_uefi_bootloader_name(iso_mountpoint),
                                       iso.get_bios_bootloader_name(iso_mountpoint)]
+
+                        # Check if a UEFI bootloader is present.
+                        if os.path.isfile(iso_mountpoint + '/boot/efi/bootx64.efi') or \
+                           os.path.isfile(iso_mountpoint + '/boot/efi/bootia32.efi'):
+                            uefi_bootloader_installed = True
+                        else:
+                            uefi_bootloader_installed = False
+
                         mount.unmount(iso_mountpoint)
+
+                        # Ask user whether to replace the bootloader or use the included one.
+                        if uefi_bootloader_installed:
+                            if QtWidgets.QMessageBox.question(self, 'Replace UEFI bootloader?',
+                                                              'This ISO image already contains a UEFI bootloader.\n' +
+                                                              'Do you want to replace the UEFI bootloader?',
+                                                              QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                                                              QtWidgets.QMessageBox.No) == QtWidgets.QMessageBox.Yes:
+                                replace_uefi_bootloader = True
+                            else:
+                                replace_uefi_bootloader = False
+                        else:
+                            replace_uefi_bootloader = True
+
+                        # Change the target variable to preserve the UEFI bootloader.
+                        if not replace_uefi_bootloader:
+                            if target == 'uefi':
+                                target = 'none'
+                            else:
+                                target = 'bios'
 
                         # Unmount partitions before continuing.
                         mount.unmount_all_partitions(device)
