@@ -73,14 +73,64 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.comboBox_checkbadblocks.insertItem(2, '3 Passes')
         self.comboBox_checkbadblocks.insertItem(3, '4 Passes')
 
-        # Find syslinux
-        self.messageBox_missingsyslinux = QtWidgets.QMessageBox()
-        self.messageBox_missingsyslinux.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        # Check for dependencies and their locations
+        self.syslinux = ['', '', '']
+        self.syslinux_modules = ['', '', '']
+        self.grldr = ''
+        self.get_dependencies()
 
-        self.messageBox_missingsyslinux.setWindowTitle('Syslinux is missing - USBMaker')
-        self.messageBox_missingsyslinux\
+        # The badblocks message box is initialized here.
+        self.messageBox_badblocks = QtWidgets.QMessageBox()
+        self.messageBox_badblocks.setStandardButtons(QtWidgets.QMessageBox.Close)
+
+        # self.device_id_list is initialized here.
+        self.device_id_list = []
+
+        # Here self.filename is initialized and the file dialog button
+        # is set to activate the get_file_name function when clicked.
+        self.filename = ''
+        self.pushButton_filedialog.clicked.connect(self.get_file_name)
+
+        # Changes to these parts of the gui trigger the update_gui function
+        # to update the gui according to the selected options.
+        self.comboBox_filesystem.currentIndexChanged.connect(self.update_gui)
+        self.comboBox_partscheme.currentIndexChanged.connect(self.update_gui)
+        self.comboBox_bootmethod.currentIndexChanged.connect(self.update_gui)
+        self.comboBox_clustersize.currentIndexChanged.connect(self.update_gui)
+        self.checkBox_bootmethod.stateChanged.connect(self.update_gui)
+        self.checkBox_checkbadblocks.stateChanged.connect(self.update_gui)
+
+        # update_gui is called to finish the initialization of the gui.
+        self.update_gui()
+
+        # The available usb devices are detected here.
+        self.refresh_device_list()
+        # The refresh button is connected to the refresh_device_list function.
+        self.pushButton_refresh.clicked.connect(self.refresh_device_list)
+
+        # The worker object is moved to a separate thread.
+        self.worker = WorkerObject(self)
+        self.thread = QtCore.QThread()
+        self.worker.moveToThread(self.thread)
+
+        # The signals emitted in the start_* functions are connected to the
+        # corresponding functions from the worker object.
+        self.signal_format.connect(self.worker.format)
+        self.signal_dd.connect(self.worker.make_bootable_dd)
+        self.signal_iso.connect(self.worker.make_bootable_iso)
+
+        # The start button is connected to the start function.
+        self.pushButton_start.clicked.connect(self.start)
+
+    def get_dependencies(self):
+        # Find syslinux
+        messagebox_missingsyslinux = QtWidgets.QMessageBox(self)
+        messagebox_missingsyslinux.setStandardButtons(QtWidgets.QMessageBox.Ok)
+
+        messagebox_missingsyslinux.setWindowTitle('Syslinux is missing - USBMaker')
+        messagebox_missingsyslinux\
             .setText('Syslinux was not found.\nThe creation of bootable drives with an ISO image may not work.')
-        self.messageBox_missingsyslinux.setIcon(QtWidgets.QMessageBox.Warning)
+        messagebox_missingsyslinux.setIcon(QtWidgets.QMessageBox.Warning)
 
         syslinux_not_found = False
 
@@ -179,16 +229,16 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             syslinux_not_found = True
 
         if syslinux_not_found:
-            self.show_messagebox(self.messageBox_missingsyslinux)
+            self.show_messagebox(messagebox_missingsyslinux)
 
         # Find grub4dos
-        self.messageBox_missinggrub4dos = QtWidgets.QMessageBox()
-        self.messageBox_missinggrub4dos.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        messagebox_missinggrub4dos = QtWidgets.QMessageBox(self)
+        messagebox_missinggrub4dos.setStandardButtons(QtWidgets.QMessageBox.Ok)
 
-        self.messageBox_missinggrub4dos.setWindowTitle('grub4dos is missing - USBMaker')
-        self.messageBox_missinggrub4dos\
+        messagebox_missinggrub4dos.setWindowTitle('grub4dos is missing - USBMaker')
+        messagebox_missinggrub4dos\
             .setText('grub4dos was not found.\nThe creation of bootable drives with an ISO image may not work.')
-        self.messageBox_missinggrub4dos.setIcon(QtWidgets.QMessageBox.Warning)
+        messagebox_missinggrub4dos.setIcon(QtWidgets.QMessageBox.Warning)
 
         grub4dos_not_found = False
 
@@ -204,63 +254,20 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             grub4dos_not_found = True
 
         if grub4dos_not_found:
-            self.show_messagebox(self.messageBox_missinggrub4dos)
+            self.show_messagebox(messagebox_missinggrub4dos)
 
         # Find grub2
-        self.messageBox_missinggrub2 = QtWidgets.QMessageBox()
-        self.messageBox_missinggrub2.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        messagebox_missinggrub2 = QtWidgets.QMessageBox(self)
+        messagebox_missinggrub2.setStandardButtons(QtWidgets.QMessageBox.Ok)
 
-        self.messageBox_missinggrub2.setWindowTitle('GRUB2 is missing - USBMaker')
-        self.messageBox_missinggrub2 \
+        messagebox_missinggrub2.setWindowTitle('GRUB2 is missing - USBMaker')
+        messagebox_missinggrub2 \
             .setText('GRUB2 was not found.\nThe creation of bootable drives with an ISO image may not work.')
-        self.messageBox_missinggrub2.setIcon(QtWidgets.QMessageBox.Warning)
+        messagebox_missinggrub2.setIcon(QtWidgets.QMessageBox.Warning)
 
         # Look for grub-install.
         if shutil.which('grub-install') is None:
-            self.show_messagebox(self.messageBox_missinggrub2)
-
-        # The badblocks message box is initialized here.
-        self.messageBox_badblocks = QtWidgets.QMessageBox()
-        self.messageBox_badblocks.setStandardButtons(QtWidgets.QMessageBox.Close)
-
-        # self.device_id_list is initialized here.
-        self.device_id_list = []
-
-        # Here self.filename is initialized and the file dialog button
-        # is set to activate the get_file_name function when clicked.
-        self.filename = ''
-        self.pushButton_filedialog.clicked.connect(self.get_file_name)
-
-        # Changes to these parts of the gui trigger the update_gui function
-        # to update the gui according to the selected options.
-        self.comboBox_filesystem.currentIndexChanged.connect(self.update_gui)
-        self.comboBox_partscheme.currentIndexChanged.connect(self.update_gui)
-        self.comboBox_bootmethod.currentIndexChanged.connect(self.update_gui)
-        self.comboBox_clustersize.currentIndexChanged.connect(self.update_gui)
-        self.checkBox_bootmethod.stateChanged.connect(self.update_gui)
-        self.checkBox_checkbadblocks.stateChanged.connect(self.update_gui)
-
-        # update_gui is called to finish the initialization of the gui.
-        self.update_gui()
-
-        # The available usb devices are detected here.
-        self.refresh_device_list()
-        # The refresh button is connected to the refresh_device_list function.
-        self.pushButton_refresh.clicked.connect(self.refresh_device_list)
-
-        # The worker object is moved to a separate thread.
-        self.worker = WorkerObject(self)
-        self.thread = QtCore.QThread()
-        self.worker.moveToThread(self.thread)
-
-        # The signals emitted in the start_* functions are connected to the
-        # corresponding functions from the worker object.
-        self.signal_format.connect(self.worker.format)
-        self.signal_dd.connect(self.worker.make_bootable_dd)
-        self.signal_iso.connect(self.worker.make_bootable_iso)
-
-        # The start button is connected to the start function.
-        self.pushButton_start.clicked.connect(self.start)
+            self.show_messagebox(messagebox_missinggrub2)
 
     def update_gui(self):
         # This function is used to update/initialize the parts of the gui
