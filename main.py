@@ -32,18 +32,12 @@ import mount
 import iso
 
 
-class StartRunnable(QtCore.QRunnable):
-    def __init__(self, instance):
-        QtCore.QRunnable.__init__(self)
-        # self.instance should be the parent's self
-        self.instance = instance
-
-    def run(self):
-        # Run self.start
-        self.instance.start()
-
-
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
+    # Signals have to be declared here.
+    signal_format = QtCore.pyqtSignal(str, str, str, str, int, int, str)
+    signal_dd = QtCore.pyqtSignal(str, str, int, str)
+    signal_iso = QtCore.pyqtSignal(str, str, str, str, str, str, int, int, str, list, list, str)
+
     def __init__(self):
         super(MainWindow, self).__init__()
 
@@ -78,9 +72,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.comboBox_checkbadblocks.insertItem(1, '2 Passes')
         self.comboBox_checkbadblocks.insertItem(2, '3 Passes')
         self.comboBox_checkbadblocks.insertItem(3, '4 Passes')
-
-        # Get the PID for this process
-        self.pid = os.getpid()
 
         # Find syslinux
         self.messageBox_missingsyslinux = QtWidgets.QMessageBox()
@@ -257,11 +248,19 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # The refresh button is connected to the refresh_device_list function.
         self.pushButton_refresh.clicked.connect(self.refresh_device_list)
 
-        # The start button is connected to the start function
-        # through a QRunnable to make it execute on a separate thread.
-        self.runnable = StartRunnable(self)
-        self.runnable.setAutoDelete(False)
-        self.pushButton_start.clicked.connect(self.thread_start)
+        # The worker object is moved to a separate thread.
+        self.worker = WorkerObject(self)
+        self.thread = QtCore.QThread()
+        self.worker.moveToThread(self.thread)
+
+        # The signals emitted in the start_* functions are connected to the
+        # corresponding functions from the worker object.
+        self.signal_format.connect(self.worker.format)
+        self.signal_dd.connect(self.worker.make_bootable_dd)
+        self.signal_iso.connect(self.worker.make_bootable_iso)
+
+        # The start button is connected to the start function.
+        self.pushButton_start.clicked.connect(self.start)
 
     def update_gui(self):
         # This function is used to update/initialize the parts of the gui
@@ -387,6 +386,21 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.update_gui()
 
+    @QtCore.pyqtSlot(bool)
+    def set_enabled(self, enable):
+        if enable:
+            self.enable_gui()
+        else:
+            self.disable_gui()
+
+    @QtCore.pyqtSlot(int)
+    def set_progress(self, value):
+        self.progressBar.setValue(value)
+
+    @QtCore.pyqtSlot(str)
+    def set_status(self, text):
+        self.label_status.setText(text)
+
     def show_about_window(self):
         center_point_x = int(self.x() + self.width() / 2)
         center_point_y = int(self.y() + self.height() / 2)
@@ -405,6 +419,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         y = int(center_point_y - messagebox.height() / 2)
         messagebox.move(x, y)
 
+    @QtCore.pyqtSlot(str)
     def show_badblocks_messagebox(self, badblocks_file):
         if os.path.getsize(badblocks_file) > 0:
             # There are bad blocks in the drive.
@@ -459,252 +474,318 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             
             self.lineEdit_label.setText(default_label)
 
+    def get_table(self):
+        if self.comboBox_partscheme.currentIndex() == 0 or self.comboBox_partscheme.currentIndex() == 1:
+            return 'msdos'
+        else:
+            return 'gpt'
+
+    def get_badblocks_passes(self):
+        if not self.checkBox_checkbadblocks.isChecked():
+            return 0
+        elif self.comboBox_checkbadblocks.currentIndex() == 1:
+            return 2
+        elif self.comboBox_checkbadblocks.currentIndex() == 2:
+            return 3
+        elif self.comboBox_checkbadblocks.currentIndex() == 3:
+            return 4
+        else:
+            return 1
+
+    def get_cluster_size(self):
+        if self.comboBox_clustersize.currentText() == '512':
+            return 512
+        elif self.comboBox_clustersize.currentText() == '1024':
+            return 1024
+        elif self.comboBox_clustersize.currentText() == '2048':
+            return 2048
+        elif self.comboBox_clustersize.currentText() == '4096':
+            return 4096
+        elif self.comboBox_clustersize.currentText() == '8192':
+            return 8192
+        elif self.comboBox_clustersize.currentText() == '16384':
+            return 16384
+        elif self.comboBox_clustersize.currentText() == '32768':
+            return 32768
+        elif self.comboBox_clustersize.currentText() == '65536':
+            return 65536
+        else:
+            return -1
+
+    def get_label(self):
+        return self.lineEdit_label.text()
+
+    def get_device_id(self):
+        return self.device_id_list[self.comboBox_device.currentIndex()]
+
+    def get_filesystem(self):
+        return self.comboBox_filesystem.currentText().lower()
+
+    def get_target(self):
+        if self.comboBox_partscheme.currentIndex() == 0 or self.comboBox_partscheme.currentIndex() == 2:
+            return 'both'
+        else:
+            return 'uefi'
+
+    def start_format(self):
+        # Collect information.
+        label = self.get_label()
+        device_id = self.get_device_id()
+        partition_table = self.get_table()
+        filesystem = self.get_filesystem()
+        device = usb_info.get_block_device_name(device_id)
+        badblocks_passes = self.get_badblocks_passes()
+        badblocks_file = '/tmp/usbmaker' + str(os.getpid()) + '-badblocks.txt'
+        clustersize = self.get_cluster_size()
+
+        # Send a signal to the worker object to start the format() function.
+        self.signal_format.emit(device, filesystem, partition_table, label, clustersize, badblocks_passes,
+                                badblocks_file)
+
+    def start_dd(self):
+        # Collect information.
+        device_id = self.get_device_id()
+        device = usb_info.get_block_device_name(device_id)
+        badblocks_passes = self.get_badblocks_passes()
+        badblocks_file = '/tmp/usbmaker' + str(os.getpid()) + '-badblocks.txt'
+
+        # Send a signal to the worker object to start the make_bootable_dd() function.
+        self.signal_dd.emit(device, self.filename, badblocks_passes, badblocks_file)
+
+    def start_iso(self):
+        # Collect information.
+        label = self.get_label()
+        device_id = self.get_device_id()
+        partition_table = self.get_table()
+        filesystem = self.get_filesystem()
+        device = usb_info.get_block_device_name(device_id)
+        badblocks_passes = self.get_badblocks_passes()
+        badblocks_file = '/tmp/usbmaker' + str(os.getpid()) + '-badblocks.txt'
+        clustersize = self.get_cluster_size()
+        target = self.get_target()
+
+        # Send a signal to the worker object to start the make_bootable_iso() function.
+        self.signal_iso.emit(device, self.filename, filesystem, partition_table, target, label, clustersize,
+                             badblocks_passes, badblocks_file, self.syslinux, self.syslinux_modules, self.grldr)
+
     def start(self):
+        # Check if there's a device selected.
         if self.comboBox_device.currentText() != '':
-            # Collect information
-            label = self.lineEdit_label.text()
-            device_id = self.device_id_list[self.comboBox_device.currentIndex()]
-            if self.comboBox_partscheme.currentIndex() == 0 or self.comboBox_partscheme.currentIndex() == 1:
-                partition_table = 'msdos'
-            else:
-                partition_table = 'gpt'
-            filesystem = self.comboBox_filesystem.currentText().lower()
-
-            device = usb_info.get_block_device_name(device_id)
-
-            if self.comboBox_checkbadblocks.currentIndex() == 1:
-                num_passes = 2
-            elif self.comboBox_checkbadblocks.currentIndex() == 2:
-                num_passes = 3
-            elif self.comboBox_checkbadblocks.currentIndex() == 3:
-                num_passes = 4
-            else:
-                num_passes = 1
-
-            badblocks_file = '/tmp/usbmaker' + str(self.pid) + '-badblocks.txt'
-
-            # Cluster size
-            if self.comboBox_clustersize.currentText() == '512':
-                clustersize = '512'
-            elif self.comboBox_clustersize.currentText() == '1024':
-                clustersize = '1024'
-            elif self.comboBox_clustersize.currentText() == '2048':
-                clustersize = '2048'
-            elif self.comboBox_clustersize.currentText() == '4096':
-                clustersize = '4096'
-            elif self.comboBox_clustersize.currentText() == '8192':
-                clustersize = '8192'
-            elif self.comboBox_clustersize.currentText() == '16384':
-                clustersize = '16384'
-            elif self.comboBox_clustersize.currentText() == '32768':
-                clustersize = '32768'
-            elif self.comboBox_clustersize.currentText() == '65536':
-                clustersize = '65536'
-            else:
-                clustersize = ''
-
             if self.checkBox_bootmethod.isChecked():
+                # Check if there's a file selected.
                 if self.filename != '':
                     if self.comboBox_bootmethod.currentText() == 'DD Image':
-                        self.disable_gui()
-
-                        self.progressBar.setValue(0)
-
-                        # Unmount partitions before continuing.
-                        mount.unmount_all_partitions(device)
-
-                        if self.checkBox_checkbadblocks.isChecked():
-                            self.label_status.setText('Checking for bad blocks...')
-                            formatting.check_badblocks(device, num_passes, badblocks_file)
-
-                            # Show message box informing the user of the badblocks check.
-                            self.show_badblocks_messagebox(badblocks_file)
-
-                        # Write image to usb
-                        self.label_status.setText('Writing image...')
-                        dd.dd(self.filename, device)
-
-                        # Notify the kernel
-                        partitioning.partprobe()
-
-                        self.progressBar.setValue(100)
-                        self.label_status.setText('Completed.')
-
-                        self.enable_gui()
-
+                        # Calling QThread.start() after the QThread is already started does nothing.
+                        self.thread.start()
+                        self.start_dd()
                     elif self.comboBox_bootmethod.currentText() == 'ISO Image':
-                        self.disable_gui()
-
-                        self.progressBar.setValue(0)
-
-                        # Collect information.
-                        if self.comboBox_partscheme.currentIndex() == 0 or self.comboBox_partscheme.currentIndex() == 2:
-                            target = 'both'
-                        else:
-                            target = 'uefi'
-
-                        iso_mountpoint = '/tmp/usbmaker' + str(self.pid) + '-iso'
-                        mount.mount_iso(self.filename, iso_mountpoint)
-
-                        bootloader = [iso.get_uefi_bootloader_name(iso_mountpoint),
-                                      iso.get_bios_bootloader_name(iso_mountpoint)]
-
-                        # Check if a UEFI bootloader is present.
-                        if os.path.isfile(iso_mountpoint + '/boot/efi/bootx64.efi') or \
-                           os.path.isfile(iso_mountpoint + '/boot/efi/bootia32.efi'):
-                            uefi_bootloader_installed = True
-                        else:
-                            uefi_bootloader_installed = False
-
-                        mount.unmount(iso_mountpoint)
-
-                        # Ask user whether to replace the bootloader or use the included one.
-                        if uefi_bootloader_installed:
-                            if QtWidgets.QMessageBox.question(self, 'Replace UEFI bootloader?',
-                                                              'This ISO image already contains a UEFI bootloader.\n' +
-                                                              'Do you want to replace the UEFI bootloader?',
-                                                              QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
-                                                              QtWidgets.QMessageBox.No) == QtWidgets.QMessageBox.Yes:
-                                replace_uefi_bootloader = True
-                            else:
-                                replace_uefi_bootloader = False
-                        else:
-                            replace_uefi_bootloader = True
-
-                        # Change the target variable to preserve the UEFI bootloader.
-                        if not replace_uefi_bootloader:
-                            if target == 'uefi':
-                                target = 'none'
-                            else:
-                                target = 'bios'
-
-                        # Unmount partitions before continuing.
-                        mount.unmount_all_partitions(device)
-
-                        self.label_status.setText('Creating the partition table...')
-
-                        # Partition the usb drive.
-                        partitioning.create_partition_table(device, partition_table)
-
-                        self.label_status.setText('Creating the partition...')
-                        self.progressBar.setValue(5)
-
-                        partitioning.create_partition_wrapper(device, filesystem)
-
-                        if partition_table == 'gpt':
-                            partitioning.change_partition_name(device, label)
-
-                        # Inform the kernel of the partitioning change.
-                        partitioning.partprobe()
-
-                        if self.checkBox_checkbadblocks.isChecked():
-                            self.label_status.setText('Checking for bad blocks...')
-                            if clustersize == '':
-                                formatting.check_badblocks(device, num_passes, badblocks_file)
-                            else:
-                                formatting.check_badblocks(device, num_passes, badblocks_file, clustersize)
-
-                            # Show message box informing the user of the badblocks check.
-                            self.show_badblocks_messagebox(badblocks_file)
-
-                        self.label_status.setText('Creating the filesystem...')
-                        self.progressBar.setValue(10)
-
-                        # Create the filesystem.
-                        if self.checkBox_checkbadblocks.isChecked():
-                            formatting.create_filesystem(device + '1', filesystem, clustersize, label, badblocks_file)
-                        else:
-                            formatting.create_filesystem(device + '1', filesystem, clustersize, label)
-
-                        self.label_status.setText('Copying files...')
-                        self.progressBar.setValue(25)
-
-                        # Mount the usb and the iso file.
-                        usb_mountpoint = '/tmp/usbmaker' + str(self.pid) + '-usb'
-                        iso_mountpoint = '/tmp/usbmaker' + str(self.pid) + '-iso'
-                        mount.mount(device + '1', usb_mountpoint)
-                        mount.mount_iso(self.filename, iso_mountpoint)
-
-                        # Copy the iso contents to the usb drive.
-                        iso.copy_iso_contents(iso_mountpoint, usb_mountpoint)
-
-                        # Unmount the iso file.
-                        mount.unmount(iso_mountpoint)
-
-                        self.label_status.setText('Installing the bootloader...')
-                        self.progressBar.setValue(80)
-
-                        # Make the usb bootable.
-                        iso.create_bootable_usb(device, usb_mountpoint, bootloader, target, partition_table,
-                                                self.syslinux, self.syslinux_modules, self.grldr)
-
-                        # Unmount the usb drive.
-                        mount.unmount(usb_mountpoint)
-
-                        if target == 'both':
-                            partitioning.mark_bootable(device, partition_table)
-
-                        self.label_status.setText('Completed.')
-                        self.progressBar.setValue(100)
-
-                        self.enable_gui()
+                        # Calling QThread.start() after the QThread is already started does nothing.
+                        self.thread.start()
+                        self.start_iso()
                 else:
+                    # No file selected.
                     self.label_status.setText('Error: No file selected.')
             else:
-                self.disable_gui()
-
-                self.progressBar.setValue(0)
-
-                # Unmount partitions before continuing.
-                mount.unmount_all_partitions(device)
-
-                self.label_status.setText('Creating the partition table...')
-
-                # Partition the usb drive.
-                partitioning.create_partition_table(device, partition_table)
-
-                if self.checkBox_checkbadblocks.isChecked():
-                    self.label_status.setText('Checking for bad blocks...')
-                    if clustersize == '':
-                        formatting.check_badblocks(device, num_passes, badblocks_file)
-                    else:
-                        formatting.check_badblocks(device, num_passes, badblocks_file, clustersize)
-
-                    # Show message box informing the user of the badblocks check.
-                    self.show_badblocks_messagebox(badblocks_file)
-
-                self.progressBar.setValue(25)
-                self.label_status.setText('Creating the partition...')
-
-                partitioning.create_partition_wrapper(device, filesystem)
-
-                if partition_table == 'gpt':
-                    partitioning.change_partition_name(device, label)
-
-                # Inform the kernel of the partitioning change.
-                partitioning.partprobe()
-
-                self.progressBar.setValue(50)
-                self.label_status.setText('Creating the filesystem...')
-
-                # Create the filesystem.
-                if self.checkBox_checkbadblocks.isChecked():
-                    formatting.create_filesystem(device + '1', filesystem, clustersize, label, badblocks_file)
-                else:
-                    formatting.create_filesystem(device + '1', filesystem, clustersize, label)
-
-                self.progressBar.setValue(100)
-                self.label_status.setText('Completed.')
-
-                self.enable_gui()
+                # Calling QThread.start() after the QThread is already started does nothing.
+                self.thread.start()
+                self.start_format()
         else:
+            # No device selected.
             self.label_status.setText('Error: no device selected.')
 
-    def thread_start(self):
-        # Start the self.start function in a different thread.
-        # This is done to keep the main thread (the GUI) running.
-        QtCore.QThreadPool.globalInstance().start(self.runnable)
 
+class WorkerObject(QtCore.QObject):
+    signal_set_enabled = QtCore.pyqtSignal(bool)
+    signal_set_progress = QtCore.pyqtSignal(int)
+    signal_set_status = QtCore.pyqtSignal(str)
+    signal_show_badblocks_messagebox = QtCore.pyqtSignal(str)
+
+    def __init__(self, main_window, parent=None):
+        super(WorkerObject, self).__init__(parent)
+
+        self.main_window = main_window
+        self.signal_set_enabled.connect(self.main_window.set_enabled)
+        self.signal_set_progress.connect(self.main_window.set_progress)
+        self.signal_set_status.connect(self.main_window.set_status)
+        self.signal_show_badblocks_messagebox.connect(self.main_window.show_badblocks_messagebox)
+
+    @QtCore.pyqtSlot(str, str, str, str, int, int, str)
+    def format(self, device, filesystem, partition_table, label, clustersize, badblocks_passes, badblocks_file):
+        self.signal_set_enabled.emit(False)
+        self.signal_set_progress.emit(0)
+
+        # Unmount partitions before continuing.
+        mount.unmount_all_partitions(device)
+
+        self.signal_set_status.emit('Creating the partition table...')
+
+        # Partition the usb drive.
+        partitioning.create_partition_table(device, partition_table)
+
+        if badblocks_passes > 0:
+            self.signal_set_status.emit('Checking for bad blocks...')
+            if clustersize == -1:
+                formatting.check_badblocks(device, str(badblocks_passes), badblocks_file)
+            else:
+                formatting.check_badblocks(device, str(badblocks_passes), badblocks_file, str(clustersize))
+
+            # Show message box informing the user of the badblocks check.
+            self.signal_show_badblocks_messagebox.emit(badblocks_file)
+
+        self.signal_set_progress.emit(25)
+        self.signal_set_status.emit('Creating the partition...')
+
+        partitioning.create_partition_wrapper(device, filesystem)
+
+        if partition_table == 'gpt':
+            partitioning.change_partition_name(device, label)
+
+        self.signal_set_progress.emit(50)
+        self.signal_set_status.emit('Creating the filesystem...')
+
+        # Create the filesystem.
+        if badblocks_passes > 0:
+            formatting.create_filesystem(device + '1', filesystem, str(clustersize), label, badblocks_file)
+        else:
+            formatting.create_filesystem(device + '1', filesystem, str(clustersize), label)
+
+        self.signal_set_progress.emit(100)
+        self.signal_set_status.emit('Completed.')
+
+        self.signal_set_enabled.emit(True)
+
+    @QtCore.pyqtSlot(str, str, int, str)
+    def make_bootable_dd(self, device, filename, badblocks_passes, badblocks_file):
+        self.signal_set_enabled.emit(False)
+        self.signal_set_progress.emit(0)
+
+        # Unmount partitions before continuing.
+        mount.unmount_all_partitions(device)
+
+        if badblocks_passes > 0:
+            self.signal_set_status.emit('Checking for bad blocks...')
+            formatting.check_badblocks(device, str(badblocks_passes), badblocks_file)
+
+            # Show message box informing the user of the badblocks check.
+            self.signal_show_badblocks_messagebox.emit(badblocks_file)
+
+        # Write image to usb
+        self.signal_set_status.emit('Writing image...')
+        dd.dd(filename, device)
+
+        self.signal_set_progress.emit(100)
+        self.signal_set_status.emit('Completed.')
+
+        self.signal_set_enabled.emit(True)
+
+    @QtCore.pyqtSlot(str, str, str, str, str, str, int, int, str, list, list, str)
+    def make_bootable_iso(self, device, filename, filesystem, partition_table, target, label, clustersize,
+                          badblocks_passes, badblocks_file, syslinux, syslinux_modules, grldr):
+        self.signal_set_enabled.emit(False)
+        self.signal_set_progress.emit(0)
+
+        iso_mountpoint = '/tmp/usbmaker' + str(os.getpid()) + '-iso'
+        mount.mount_iso(filename, iso_mountpoint)
+
+        bootloader = [iso.get_uefi_bootloader_name(iso_mountpoint),
+                      iso.get_bios_bootloader_name(iso_mountpoint)]
+
+        # Check if a UEFI bootloader is present.
+        if os.path.isfile(iso_mountpoint + '/boot/efi/bootx64.efi') or \
+           os.path.isfile(iso_mountpoint + '/boot/efi/bootia32.efi'):
+            uefi_bootloader_installed = True
+        else:
+            uefi_bootloader_installed = False
+
+        mount.unmount(iso_mountpoint)
+
+        # Ask user whether to replace the bootloader or use the included one.
+        if uefi_bootloader_installed:
+            if QtWidgets.QMessageBox.question(self.main_window, 'Replace UEFI bootloader?',
+                                              'This ISO image already contains a UEFI bootloader.\n' +
+                                              'Do you want to replace the UEFI bootloader?',
+                                              QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                                              QtWidgets.QMessageBox.No) == QtWidgets.QMessageBox.Yes:
+                replace_uefi_bootloader = True
+            else:
+                replace_uefi_bootloader = False
+        else:
+            replace_uefi_bootloader = True
+
+        # Change the target variable to preserve the UEFI bootloader.
+        if not replace_uefi_bootloader:
+            if target == 'uefi':
+                target = 'none'
+            else:
+                target = 'bios'
+
+        # Unmount partitions before continuing.
+        mount.unmount_all_partitions(device)
+
+        self.signal_set_status.emit('Creating the partition table...')
+
+        # Partition the usb drive.
+        partitioning.create_partition_table(device, partition_table)
+
+        self.signal_set_status.emit('Creating the partition...')
+        self.signal_set_progress.emit(5)
+
+        partitioning.create_partition_wrapper(device, filesystem)
+
+        if partition_table == 'gpt':
+            partitioning.change_partition_name(device, label)
+
+        if badblocks_passes > 0:
+            self.signal_set_status.emit('Checking for bad blocks...')
+            if clustersize == -1:
+                formatting.check_badblocks(device, str(badblocks_passes), badblocks_file)
+            else:
+                formatting.check_badblocks(device, str(badblocks_passes), badblocks_file, str(clustersize))
+
+            # Show message box informing the user of the badblocks check.
+            self.signal_show_badblocks_messagebox.emit(badblocks_file)
+
+        self.signal_set_status.emit('Creating the filesystem...')
+        self.signal_set_progress.emit(10)
+
+        # Create the filesystem.
+        if badblocks_passes > 0:
+            formatting.create_filesystem(device + '1', filesystem, str(clustersize), label, badblocks_file)
+        else:
+            formatting.create_filesystem(device + '1', filesystem, str(clustersize), label)
+
+        self.signal_set_status.emit('Copying files...')
+        self.signal_set_progress.emit(25)
+
+        # Mount the usb and the iso file.
+        usb_mountpoint = '/tmp/usbmaker' + str(os.getpid()) + '-usb'
+        iso_mountpoint = '/tmp/usbmaker' + str(os.getpid()) + '-iso'
+        mount.mount(device + '1', usb_mountpoint)
+        mount.mount_iso(filename, iso_mountpoint)
+
+        # Copy the iso contents to the usb drive.
+        iso.copy_iso_contents(iso_mountpoint, usb_mountpoint)
+
+        # Unmount the iso file.
+        mount.unmount(iso_mountpoint)
+
+        self.signal_set_status.emit('Installing the bootloader...')
+        self.signal_set_progress.emit(80)
+
+        # Make the usb bootable.
+        iso.create_bootable_usb(device, usb_mountpoint, bootloader, target, partition_table,
+                                syslinux, syslinux_modules, grldr)
+
+        # Unmount the usb drive.
+        mount.unmount(usb_mountpoint)
+
+        if target == 'both':
+            partitioning.mark_bootable(device, partition_table)
+
+        self.signal_set_status.emit('Completed.')
+        self.signal_set_progress.emit(100)
+
+        self.signal_set_enabled.emit(True)
 
 app = QtWidgets.QApplication(sys.argv)
 window = MainWindow()

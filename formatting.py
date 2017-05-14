@@ -18,8 +18,8 @@
 import subprocess
 
 
-def create_fat32_filesystem(partition, label='', badblocks_file='', clustersize=''):
-    if clustersize == '':
+def create_fat32_filesystem(partition, label='', badblocks_file='', clustersize='-1'):
+    if clustersize == '-1':
         if label == '':
             if badblocks_file == '':
                 subprocess.run(['mkfs.fat', '-F32', '/dev/' + partition])
@@ -44,8 +44,8 @@ def create_fat32_filesystem(partition, label='', badblocks_file='', clustersize=
                                 '/dev/' + partition])
 
 
-def create_fat16_filesystem(partition, label='', badblocks_file='', clustersize=''):
-    if clustersize == '':
+def create_fat16_filesystem(partition, label='', badblocks_file='', clustersize='-1'):
+    if clustersize == '-1':
         if label == '':
             if badblocks_file == '':
                 subprocess.run(['mkfs.fat', '-F16', '/dev/' + partition])
@@ -77,8 +77,8 @@ def create_exfat_filesystem(partition, label=''):
         subprocess.run(['mkfs.exfat', '-n', label[:15], '/dev/' + partition])
 
 
-def create_ntfs_filesystem(partition, label='', clustersize=''):
-    if clustersize == '':
+def create_ntfs_filesystem(partition, label='', clustersize='-1'):
+    if clustersize == '-1':
         if label == '':
             subprocess.run(['mkfs.ntfs', '-Q', '/dev/' + partition])
         else:
@@ -90,15 +90,15 @@ def create_ntfs_filesystem(partition, label='', clustersize=''):
             subprocess.run(['mkfs.ntfs', '-Q', '-L', label, '-c', clustersize, '/dev/' + partition])
 
 
-def create_udf_filesystem(partition, label='', clustersize=''):
-    if clustersize == '':
+def create_udf_filesystem(partition, label='', clustersize='-1'):
+    if clustersize == '-1':
         subprocess.run(['mkfs.udf', '-l', label, '/dev/' + partition])
     else:
         subprocess.run(['mkfs.udf', '-l', label, '-b', clustersize, '/dev/' + partition])
 
 
-def create_ext4_filesystem(partition, label='', badblocks_file='', clustersize=''):
-    if clustersize == '':
+def create_ext4_filesystem(partition, label='', badblocks_file='', clustersize='-1'):
+    if clustersize == '-1':
         if label == '':
             if badblocks_file == '':
                 subprocess.run(['mkfs.ext4', '/dev/' + partition])
@@ -122,8 +122,8 @@ def create_ext4_filesystem(partition, label='', badblocks_file='', clustersize='
                 subprocess.run(['mkfs.ext4', '-L', label, '-b', clustersize, '-l', badblocks_file, '/dev/' + partition])
 
 
-def create_btrfs_filesystem(partition, label='', badblocks_file='', clustersize=''):
-    if clustersize == '':
+def create_btrfs_filesystem(partition, label='', badblocks_file='', clustersize='-1'):
+    if clustersize == '-1':
         if label == '':
             if badblocks_file == '':
                 subprocess.run(['mkfs.btrfs', '/dev/' + partition])
@@ -147,7 +147,7 @@ def create_btrfs_filesystem(partition, label='', badblocks_file='', clustersize=
                 subprocess.run(['mkfs.btrfs', '-L', label, '-n', clustersize, '-l', badblocks_file, '/dev/' + partition])
 
 
-def create_filesystem(partition, filesystem, clustersize='', label='', badblocks_file=''):
+def create_filesystem(partition, filesystem, clustersize='-1', label='', badblocks_file=''):
     if filesystem.lower() == 'fat32':
         create_fat32_filesystem(partition, label, badblocks_file, clustersize)
     elif filesystem.lower() == 'fat16':
