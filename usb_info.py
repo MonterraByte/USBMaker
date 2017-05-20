@@ -63,6 +63,13 @@ def get_size(device):
     return sectors * block_size
 
 
+def get_block_size(device):
+    with open('/sys/block/' + device + '/queue/hw_sector_size', mode='r') as sector_size_file:
+        sector_size = int(sector_size_file.read().rstrip())
+
+    return sector_size
+
+
 def get_partitions(device):
     part_list = []
     for file in os.listdir('/dev/'):

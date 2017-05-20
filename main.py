@@ -652,9 +652,9 @@ class WorkerObject(QtCore.QObject):
 
         # Create the filesystem.
         if badblocks_passes > 0:
-            formatting.create_filesystem(device + '1', filesystem, str(clustersize), label, badblocks_file)
+            formatting.create_filesystem(device, '1', filesystem, str(clustersize), label, badblocks_file)
         else:
-            formatting.create_filesystem(device + '1', filesystem, str(clustersize), label)
+            formatting.create_filesystem(device, '1', filesystem, str(clustersize), label)
 
         self.signal_set_progress.emit(100)
         self.signal_set_status.emit('Completed.')
@@ -757,9 +757,9 @@ class WorkerObject(QtCore.QObject):
 
         # Create the filesystem.
         if badblocks_passes > 0:
-            formatting.create_filesystem(device + '1', filesystem, str(clustersize), label, badblocks_file)
+            formatting.create_filesystem(device, '1', filesystem, str(clustersize), label, badblocks_file)
         else:
-            formatting.create_filesystem(device + '1', filesystem, str(clustersize), label)
+            formatting.create_filesystem(device, '1', filesystem, str(clustersize), label)
 
         self.signal_set_status.emit('Copying files...')
         self.signal_set_progress.emit(25)
