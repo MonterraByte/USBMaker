@@ -74,10 +74,13 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.comboBox_checkbadblocks.insertItem(3, '4 Passes')
 
         # Check for dependencies and their locations
+        self.dependencies = {}
+        self.update_dependencies()
+
         self.syslinux = ['', '', '']
         self.syslinux_modules = ['', '', '']
         self.grldr = ''
-        self.get_dependencies()
+        self.find_dependencies()
 
         # The badblocks message box is initialized here.
         self.messageBox_badblocks = QtWidgets.QMessageBox()
@@ -122,18 +125,112 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # The start button is connected to the start function.
         self.pushButton_start.clicked.connect(self.start)
 
-    def get_dependencies(self):
+    def update_dependencies(self):
+        # Dependencies:
+        # - parted
+        # - grub2 (grub-install)
+        # - syslinux (extlinux)
+        # - grub4dos (bootlace(64).com)
+        # - systemd-boot
+        # - dd
+        # - mkfs.fat
+        # - mkfs.exfat
+        # - mkfs.ntfs
+        # - mkfs.udf
+        # - mkfs.ext4
+        # - mkfs.btrfs
+        # - badblocks
+        # - cdrtools (isoinfo)
+
+        # Reset the dictionary.
+        self.dependencies = {}
+
+        # parted
+        if shutil.which('parted') is None:
+            self.dependencies['parted'] = False
+        else:
+            self.dependencies['parted'] = True
+
+        # grub2
+        if shutil.which('grub-install') is None:
+            self.dependencies['grub2'] = False
+        else:
+            self.dependencies['grub2'] = True
+
+        # syslinux
+        if shutil.which('extlinux') is None:
+            self.dependencies['syslinux'] = False
+        else:
+            self.dependencies['syslinux'] = True
+
+        # grub4dos
+        if shutil.which('bootlace.com') is None and shutil.which('bootlace64.com') is None:
+            self.dependencies['grub4dos'] = False
+        else:
+            self.dependencies['grub4dos'] = True
+
+        # systemd-boot
+        if shutil.which('bootctl') is None:
+            self.dependencies['systemd-boot'] = False
+        else:
+            self.dependencies['systemd-boot'] = True
+
+        # dd
+        if shutil.which('dd') is None:
+            self.dependencies['dd'] = False
+        else:
+            self.dependencies['dd'] = True
+
+        # mkfs.fat
+        if shutil.which('mkfs.fat') is None:
+            self.dependencies['mkfs.fat'] = False
+        else:
+            self.dependencies['mkfs.fat'] = True
+
+        # mkfs.exfat
+        if shutil.which('mkfs.exfat') is None:
+            self.dependencies['mkfs.exfat'] = False
+        else:
+            self.dependencies['mkfs.exfat'] = True
+
+        # mkfs.ntfs
+        if shutil.which('mkfs.ntfs') is None:
+            self.dependencies['mkfs.ntfs'] = False
+        else:
+            self.dependencies['mkfs.ntfs'] = True
+
+        # mkfs.udf
+        if shutil.which('mkfs.udf') is None:
+            self.dependencies['mkfs.udf'] = False
+        else:
+            self.dependencies['mkfs.udf'] = True
+
+        # mkfs.ext4
+        if shutil.which('mkfs.ext4') is None:
+            self.dependencies['mkfs.ext4'] = False
+        else:
+            self.dependencies['mkfs.ext4'] = True
+
+        # mkfs.btrfs
+        if shutil.which('mkfs.btrfs') is None:
+            self.dependencies['mkfs.btrfs'] = False
+        else:
+            self.dependencies['mkfs.btrfs'] = True
+
+        # badblocks
+        if shutil.which('badblocks') is None:
+            self.dependencies['badblocks'] = False
+        else:
+            self.dependencies['badblocks'] = True
+
+        # cdrtools
+        if shutil.which('isoinfo') is None:
+            self.dependencies['cdrtools'] = False
+        else:
+            self.dependencies['cdrtools'] = True
+
+    def find_dependencies(self):
         # Find syslinux
-        messagebox_missingsyslinux = QtWidgets.QMessageBox(self)
-        messagebox_missingsyslinux.setStandardButtons(QtWidgets.QMessageBox.Ok)
-
-        messagebox_missingsyslinux.setWindowTitle('Syslinux is missing - USBMaker')
-        messagebox_missingsyslinux\
-            .setText('Syslinux was not found.\nThe creation of bootable drives with an ISO image may not work.')
-        messagebox_missingsyslinux.setIcon(QtWidgets.QMessageBox.Warning)
-
-        syslinux_not_found = False
-
         # self.syslinux contains the path to the directory containing the
         # syslinux mbr and the efi executables, in this format: [bios, efi64, efi32]
         # self.syslinux_modules contains the path to the module directory
@@ -151,15 +248,13 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.syslinux[0] = '/usr/share/syslinux'
         else:
             self.syslinux[0] = ''
-            syslinux_not_found = True
 
         if os.path.exists('/usr/lib/syslinux/efi64/syslinux.efi'):
             self.syslinux[1] = '/usr/lib/syslinux/efi64'
         elif os.path.exists('/usr/lib/SYSLINUX.EFI/efi64/syslinux.efi'):
             self.syslinux[1] = '/usr/lib/SYSLINUX.EFI/efi64'
         else:
-            self.syslinux_[1] = ''
-            syslinux_not_found = True
+            self.syslinux[1] = ''
 
         if os.path.exists('/usr/lib/syslinux/efi32/syslinux.efi'):
             self.syslinux[2] = '/usr/lib/syslinux/efi32'
@@ -167,7 +262,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.syslinux[2] = '/usr/lib/SYSLINUX.EFI/efi32'
         else:
             self.syslinux[2] = ''
-            syslinux_not_found = True
 
         # Modules
 
@@ -188,7 +282,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     break
         else:
             self.syslinux_modules[0] = ''
-            syslinux_not_found = True
 
         if os.path.isdir('/usr/lib/syslinux/efi64'):
             for file in os.listdir('/usr/lib/syslinux/efi64'):
@@ -207,7 +300,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     break
         else:
             self.syslinux_modules[1] = ''
-            syslinux_not_found = True
 
         if os.path.isdir('/usr/lib/syslinux/efi32'):
             for file in os.listdir('/usr/lib/syslinux/efi32'):
@@ -226,48 +318,13 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     break
         else:
             self.syslinux_modules[2] = ''
-            syslinux_not_found = True
-
-        if syslinux_not_found:
-            self.show_messagebox(messagebox_missingsyslinux)
 
         # Find grub4dos
-        messagebox_missinggrub4dos = QtWidgets.QMessageBox(self)
-        messagebox_missinggrub4dos.setStandardButtons(QtWidgets.QMessageBox.Ok)
-
-        messagebox_missinggrub4dos.setWindowTitle('grub4dos is missing - USBMaker')
-        messagebox_missinggrub4dos\
-            .setText('grub4dos was not found.\nThe creation of bootable drives with an ISO image may not work.')
-        messagebox_missinggrub4dos.setIcon(QtWidgets.QMessageBox.Warning)
-
-        grub4dos_not_found = False
-
-        # Check if either bootlace.com or bootlace64.com are on PATH.
-        if shutil.which('bootlace64.com') is None or shutil.which('bootlace.com') is None:
-            grub4dos_not_found = True
-
         # grldr
         if os.path.exists('/grub/grldr'):
             self.grldr = '/grub/grldr'
         else:
             self.grldr = ''
-            grub4dos_not_found = True
-
-        if grub4dos_not_found:
-            self.show_messagebox(messagebox_missinggrub4dos)
-
-        # Find grub2
-        messagebox_missinggrub2 = QtWidgets.QMessageBox(self)
-        messagebox_missinggrub2.setStandardButtons(QtWidgets.QMessageBox.Ok)
-
-        messagebox_missinggrub2.setWindowTitle('GRUB2 is missing - USBMaker')
-        messagebox_missinggrub2 \
-            .setText('GRUB2 was not found.\nThe creation of bootable drives with an ISO image may not work.')
-        messagebox_missinggrub2.setIcon(QtWidgets.QMessageBox.Warning)
-
-        # Look for grub-install.
-        if shutil.which('grub-install') is None:
-            self.show_messagebox(messagebox_missinggrub2)
 
     def update_gui(self):
         # This function is used to update/initialize the parts of the gui
