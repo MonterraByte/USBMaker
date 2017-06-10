@@ -36,7 +36,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     # Signals have to be declared here.
     signal_format = QtCore.pyqtSignal(str, str, str, str, int, int, str)
     signal_dd = QtCore.pyqtSignal(str, str, int, str)
-    signal_iso = QtCore.pyqtSignal(str, str, str, str, str, str, int, int, str, list, list, str)
+    signal_iso = QtCore.pyqtSignal(str, str, str, str, str, list, str, int, int, str, list, list, str)
 
     def __init__(self):
         super(MainWindow, self).__init__()
@@ -390,13 +390,20 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.checkBox_bootmethod.setEnabled(True)
                 self.comboBox_bootmethod.setEnabled(True)
 
+        if not self.dependencies['badblocks']:
+            self.checkBox_checkbadblocks.setChecked(False)
+            self.checkBox_checkbadblocks.setEnabled(False)
+            self.checkBox_checkbadblocks.setToolTip('"badblocks" was not found. Install it to use this feature.')
+            self.comboBox_checkbadblocks.setToolTip('"badblocks" was not found. Install it to use this feature.')
+        else:
+            self.checkBox_checkbadblocks.setEnabled(True)
+            self.checkBox_checkbadblocks.setToolTip('')
+            self.comboBox_checkbadblocks.setToolTip('')
+
         if self.comboBox_clustersize.currentIndex() == 0:
             self.checkBox_checkbadblocks.setEnabled(False)
             self.checkBox_checkbadblocks.setChecked(False)
             self.comboBox_checkbadblocks.setEnabled(False)
-        else:
-            self.checkBox_checkbadblocks.setEnabled(True)
-            self.comboBox_checkbadblocks.setEnabled(True)
 
         if not self.checkBox_bootmethod.isChecked():
             self.comboBox_bootmethod.setEnabled(False)
@@ -521,22 +528,23 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             # Only change self.filename if a file is actually selected.
             self.filename = filename
 
-            default_label = ''
+            if self.dependencies['cdrtools']:
+                default_label = ''
 
-            try:
-                isoinfo_output = subprocess.check_output(['isoinfo', '-d', '-i', self.filename]).decode()
-            except subprocess.CalledProcessError:
-                # If the selected file is not an iso file, isoinfo will
-                # return a non-zero return code. If this exception isn't
-                # caught, the whole program will be terminated.
-                isoinfo_output = ''
+                try:
+                    isoinfo_output = subprocess.check_output(['isoinfo', '-d', '-i', self.filename]).decode()
+                except subprocess.CalledProcessError:
+                    # If the selected file is not an iso file, isoinfo will
+                    # return a non-zero return code. If this exception isn't
+                    # caught, the whole program will be terminated.
+                    isoinfo_output = ''
 
-            isoinfo_list = isoinfo_output.splitlines()
-            for line in isoinfo_list:
-                if re.search('Volume id:', line):
-                    default_label = line[11:]
-            
-            self.lineEdit_label.setText(default_label)
+                isoinfo_list = isoinfo_output.splitlines()
+                for line in isoinfo_list:
+                    if re.search('Volume id:', line):
+                        default_label = line[11:]
+
+                self.lineEdit_label.setText(default_label)
 
     def get_table(self):
         if self.comboBox_partscheme.currentIndex() == 0 or self.comboBox_partscheme.currentIndex() == 1:
@@ -602,9 +610,56 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         badblocks_file = '/tmp/usbmaker' + str(os.getpid()) + '-badblocks.txt'
         clustersize = self.get_cluster_size()
 
-        # Send a signal to the worker object to start the format() function.
-        self.signal_format.emit(device, filesystem, partition_table, label, clustersize, badblocks_passes,
-                                badblocks_file)
+        if not self.dependencies['badblocks']:
+            badblocks_passes = 0
+
+        # missing_deps is a string containing the list of missing dependencies.
+        missing_deps = ''
+        mkfs_found = False
+
+        if filesystem == 'fat32' or filesystem == 'fat16':
+            if self.dependencies['mkfs.fat']:
+                mkfs_found = True
+            else:
+                missing_deps += '\nmkfs.fat'
+        elif filesystem == 'exfat':
+            if self.dependencies['mkfs.exfat']:
+                mkfs_found = True
+            else:
+                missing_deps += '\nmkfs.exfat'
+        elif filesystem == 'ntfs':
+            if self.dependencies['mkfs.ntfs']:
+                mkfs_found = True
+            else:
+                missing_deps += '\nmkfs.ntfs'
+        elif filesystem == 'udf':
+            if self.dependencies['mkfs.udf']:
+                mkfs_found = True
+            else:
+                missing_deps += '\nmkfs.udf'
+        elif filesystem == 'ext4':
+            if self.dependencies['mkfs.ext4']:
+                mkfs_found = True
+            else:
+                missing_deps += '\nmkfs.ext4'
+        elif filesystem == 'btrfs':
+            if self.dependencies['mkfs.btrfs']:
+                mkfs_found = True
+            else:
+                missing_deps += '\nmkfs.btrfs'
+        else:
+            missing_deps += '\nUnknown filesystem: "' + filesystem + '"'
+
+        if not self.dependencies['parted']:
+            missing_deps += '\nparted'
+
+        if not mkfs_found or not self.dependencies['parted']:
+            QtWidgets.QMessageBox.warning(self, 'USBMaker', 'Could not find the software required to perform this ' +
+                                          'action. The dependencies that need to be installed are:\n' + missing_deps)
+        else:
+            # Send a signal to the worker object to start the format() function.
+            self.signal_format.emit(device, filesystem, partition_table, label, clustersize, badblocks_passes,
+                                    badblocks_file)
 
     def start_dd(self):
         # Collect information.
@@ -613,8 +668,15 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         badblocks_passes = self.get_badblocks_passes()
         badblocks_file = '/tmp/usbmaker' + str(os.getpid()) + '-badblocks.txt'
 
-        # Send a signal to the worker object to start the make_bootable_dd() function.
-        self.signal_dd.emit(device, self.filename, badblocks_passes, badblocks_file)
+        if not self.dependencies['badblocks']:
+            badblocks_passes = 0
+
+        if not self.dependencies['dd']:
+            QtWidgets.QMessageBox.warning(self, 'USBMaker', 'Could not find the software required to perform this ' +
+                                          'action. The dependencies that need to be installed are:\n' + '\ndd')
+        else:
+            # Send a signal to the worker object to start the make_bootable_dd() function.
+            self.signal_dd.emit(device, self.filename, badblocks_passes, badblocks_file)
 
     def start_iso(self):
         # Collect information.
@@ -628,9 +690,172 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         clustersize = self.get_cluster_size()
         target = self.get_target()
 
-        # Send a signal to the worker object to start the make_bootable_iso() function.
-        self.signal_iso.emit(device, self.filename, filesystem, partition_table, target, label, clustersize,
-                             badblocks_passes, badblocks_file, self.syslinux, self.syslinux_modules, self.grldr)
+        iso_mountpoint = '/tmp/usbmaker' + str(os.getpid()) + '-iso'
+        mount.mount_iso(self.filename, iso_mountpoint)
+
+        bootloader = [iso.get_uefi_bootloader_name(iso_mountpoint), iso.get_bios_bootloader_name(iso_mountpoint)]
+
+        # Check if a UEFI bootloader is present.
+        if os.path.isfile(iso_mountpoint + '/boot/efi/bootx64.efi') or \
+           os.path.isfile(iso_mountpoint + '/boot/efi/bootia32.efi'):
+            uefi_bootloader_installed = True
+        else:
+            uefi_bootloader_installed = False
+
+        mount.unmount(iso_mountpoint)
+
+        # Ask user whether to replace the bootloader or use the included one.
+        if uefi_bootloader_installed:
+            if QtWidgets.QMessageBox.question(self.main_window, 'Replace UEFI bootloader?',
+                                              'This ISO image already contains a UEFI bootloader.\n' +
+                                              'Do you want to replace the UEFI bootloader?',
+                                              QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                                              QtWidgets.QMessageBox.No) == QtWidgets.QMessageBox.Yes:
+                replace_uefi_bootloader = True
+            else:
+                replace_uefi_bootloader = False
+        else:
+            replace_uefi_bootloader = True
+
+        # Change the target variable to preserve the UEFI bootloader.
+        if not replace_uefi_bootloader:
+            if target == 'uefi':
+                target = 'none'
+            else:
+                target = 'bios'
+
+        if not self.dependencies['badblocks']:
+            badblocks_passes = 0
+
+        # missing_deps is a string containing the list of missing dependencies.
+        missing_deps = ''
+        mkfs_found = False
+        bootloader_found = False
+
+        if filesystem == 'fat32' or filesystem == 'fat16':
+            if self.dependencies['mkfs.fat']:
+                mkfs_found = True
+            else:
+                missing_deps += '\nmkfs.fat'
+        elif filesystem == 'exfat':
+            if self.dependencies['mkfs.exfat']:
+                mkfs_found = True
+            else:
+                missing_deps += '\nmkfs.exfat'
+        elif filesystem == 'ntfs':
+            if self.dependencies['mkfs.ntfs']:
+                mkfs_found = True
+            else:
+                missing_deps += '\nmkfs.ntfs'
+        elif filesystem == 'udf':
+            if self.dependencies['mkfs.udf']:
+                mkfs_found = True
+            else:
+                missing_deps += '\nmkfs.udf'
+        elif filesystem == 'ext4':
+            if self.dependencies['mkfs.ext4']:
+                mkfs_found = True
+            else:
+                missing_deps += '\nmkfs.ext4'
+        elif filesystem == 'btrfs':
+            if self.dependencies['mkfs.btrfs']:
+                mkfs_found = True
+            else:
+                missing_deps += '\nmkfs.btrfs'
+        else:
+            missing_deps += '\nUnknown filesystem: "' + filesystem + '"'
+
+        if target == 'none':
+            bootloader_found = True
+        
+        elif target == 'uefi':
+            if bootloader[0] == 'syslinux':
+                if self.dependencies['syslinux']:
+                    bootloader_found = True
+                else:
+                    missing_deps += '\nsyslinux'
+            elif bootloader[0] == 'grub2':
+                if self.dependencies['grub2']:
+                    bootloader_found = True
+                else:
+                    missing_deps += '\ngrub2'
+            elif bootloader[0] == 'systemd-boot':
+                if self.dependencies['systemd-boot']:
+                    bootloader_found = True
+                else:
+                    missing_deps += '\nsystemd-boot'
+            else:
+                missing_deps += '\nUnknown bootloader (UEFI)'
+
+        elif target == 'bios':
+            if bootloader[1] == 'syslinux':
+                if self.dependencies['syslinux']:
+                    bootloader_found = True
+                else:
+                    missing_deps += '\nsyslinux'
+            elif bootloader[1] == 'grub4dos':
+                if self.dependencies['grub4dos']:
+                    bootloader_found = True
+                else:
+                    missing_deps += '\ngrub4dos'
+            else:
+                missing_deps += '\nUnknown bootloader (BIOS)'
+
+        elif target == 'both':
+            if bootloader[0] == 'syslinux' and bootloader[1] == 'syslinux':
+                if self.dependencies['syslinux']:
+                    bootloader_found = True
+                else:
+                    missing_deps += '\nsyslinux'
+            else:
+                uefi_bootloader_found = False
+                bios_bootloader_found = False
+
+                if bootloader[0] == 'syslinux':
+                    if self.dependencies['syslinux']:
+                        uefi_bootloader_found = True
+                    else:
+                        missing_deps += '\nsyslinux'
+                elif bootloader[0] == 'grub2':
+                    if self.dependencies['grub2']:
+                        uefi_bootloader_found = True
+                    else:
+                        missing_deps += '\ngrub2'
+                elif bootloader[0] == 'systemd-boot':
+                    if self.dependencies['systemd-boot']:
+                        uefi_bootloader_found = True
+                    else:
+                        missing_deps += '\nsystemd-boot'
+                else:
+                    missing_deps += '\nUnknown bootloader (UEFI)'
+
+                if bootloader[1] == 'syslinux':
+                    if self.dependencies['syslinux']:
+                        bios_bootloader_found = True
+                    else:
+                        missing_deps += '\nsyslinux'
+                elif bootloader[1] == 'grub4dos':
+                    if self.dependencies['grub4dos']:
+                        bios_bootloader_found = True
+                    else:
+                        missing_deps += '\ngrub4dos'
+                else:
+                    missing_deps += '\nUnknown bootloader (BIOS)'
+
+                if uefi_bootloader_found and bios_bootloader_found:
+                    bootloader_found = True
+
+        if not self.dependencies['parted']:
+            missing_deps += '\nparted'
+
+        if not mkfs_found or not bootloader_found or not self.dependencies['parted']:
+            QtWidgets.QMessageBox.warning(self, 'USBMaker', 'Could not find the software required to perform this ' +
+                                          'action. The dependencies that need to be installed are:\n' + missing_deps)
+        else:
+            # Send a signal to the worker object to start the make_bootable_iso() function.
+            self.signal_iso.emit(device, self.filename, filesystem, partition_table, target, bootloader, label,
+                                 clustersize, badblocks_passes, badblocks_file, self.syslinux, self.syslinux_modules,
+                                 self.grldr)
 
     def start(self):
         # Check if there's a device selected.
@@ -675,6 +900,7 @@ class WorkerObject(QtCore.QObject):
 
     @QtCore.pyqtSlot(str, str, str, str, int, int, str)
     def format(self, device, filesystem, partition_table, label, clustersize, badblocks_passes, badblocks_file):
+        # Requires: parted, mkfs.*
         self.signal_set_enabled.emit(False)
         self.signal_set_progress.emit(0)
 
@@ -720,6 +946,7 @@ class WorkerObject(QtCore.QObject):
 
     @QtCore.pyqtSlot(str, str, int, str)
     def make_bootable_dd(self, device, filename, badblocks_passes, badblocks_file):
+        # Requires: dd
         self.signal_set_enabled.emit(False)
         self.signal_set_progress.emit(0)
 
@@ -742,46 +969,12 @@ class WorkerObject(QtCore.QObject):
 
         self.signal_set_enabled.emit(True)
 
-    @QtCore.pyqtSlot(str, str, str, str, str, str, int, int, str, list, list, str)
-    def make_bootable_iso(self, device, filename, filesystem, partition_table, target, label, clustersize,
+    @QtCore.pyqtSlot(str, str, str, str, str, list, str, int, int, str, list, list, str)
+    def make_bootable_iso(self, device, filename, filesystem, partition_table, target, bootloader, label, clustersize,
                           badblocks_passes, badblocks_file, syslinux, syslinux_modules, grldr):
+        # Requires: parted, mkfs.*, bootloader(grub2, syslinux, grub4dos, systemd-boot)
         self.signal_set_enabled.emit(False)
         self.signal_set_progress.emit(0)
-
-        iso_mountpoint = '/tmp/usbmaker' + str(os.getpid()) + '-iso'
-        mount.mount_iso(filename, iso_mountpoint)
-
-        bootloader = [iso.get_uefi_bootloader_name(iso_mountpoint),
-                      iso.get_bios_bootloader_name(iso_mountpoint)]
-
-        # Check if a UEFI bootloader is present.
-        if os.path.isfile(iso_mountpoint + '/boot/efi/bootx64.efi') or \
-           os.path.isfile(iso_mountpoint + '/boot/efi/bootia32.efi'):
-            uefi_bootloader_installed = True
-        else:
-            uefi_bootloader_installed = False
-
-        mount.unmount(iso_mountpoint)
-
-        # Ask user whether to replace the bootloader or use the included one.
-        if uefi_bootloader_installed:
-            if QtWidgets.QMessageBox.question(self.main_window, 'Replace UEFI bootloader?',
-                                              'This ISO image already contains a UEFI bootloader.\n' +
-                                              'Do you want to replace the UEFI bootloader?',
-                                              QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
-                                              QtWidgets.QMessageBox.No) == QtWidgets.QMessageBox.Yes:
-                replace_uefi_bootloader = True
-            else:
-                replace_uefi_bootloader = False
-        else:
-            replace_uefi_bootloader = True
-
-        # Change the target variable to preserve the UEFI bootloader.
-        if not replace_uefi_bootloader:
-            if target == 'uefi':
-                target = 'none'
-            else:
-                target = 'bios'
 
         # Unmount partitions before continuing.
         mount.unmount_all_partitions(device)
