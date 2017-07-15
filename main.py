@@ -23,6 +23,7 @@ import subprocess
 import shutil
 from PyQt5 import QtWidgets, QtCore
 from gui import Ui_MainWindow
+import uid_info
 import about
 import usb_info
 import partitioning
@@ -81,6 +82,25 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.syslinux_modules = ['', '', '']
         self.grldr = ''
         self.find_dependencies()
+
+        # Locate the user's home directory.
+        if not os.getenv('PKEXEC_UID') is None:
+            try:
+                self.homedir = uid_info.get_home_from_uid(os.getenv('PKEXEC_UID'))
+            except uid_info.UserNotFoundError:
+                self.homedir = os.path.expanduser('~')
+        elif not os.getenv('KDESU_USER') is None:
+            try:
+                self.homedir = uid_info.get_home_from_username(os.getenv('KDESU_USER'))
+            except uid_info.UserNotFoundError:
+                self.homedir = os.path.expanduser('~')
+        elif not os.getenv('SUDO_UID') is None:
+            try:
+                self.homedir = uid_info.get_home_from_uid(os.getenv('SUDO_UID'))
+            except uid_info.UserNotFoundError:
+                self.homedir = os.path.expanduser('~')
+        else:
+            self.homedir = os.path.expanduser('~')
 
         # The badblocks message box is initialized here.
         self.messageBox_badblocks = QtWidgets.QMessageBox()
@@ -521,7 +541,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # getOpenFileName returns a tuple with the file path and the filter,
         # so to get only the file path we use [0].
         # If the user selects the cancel button, self.filename remains unchanged
-        filename = QtWidgets.QFileDialog.getOpenFileName(directory=os.path.expanduser('~'),
+        filename = QtWidgets.QFileDialog.getOpenFileName(directory=self.homedir,
                                                          filter='ISO Files (*.iso);;All Files (*)',
                                                          initialFilter='ISO Files (*.iso)')[0]
         if filename != '':
