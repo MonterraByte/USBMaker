@@ -43,8 +43,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         super(MainWindow, self).__init__()
 
         self.setupUi(self)
-        desktop_center = QtWidgets.QDesktopWidget().availableGeometry().center()
-        self.move(int(desktop_center.x() - self.width() / 2), int(desktop_center.y() - self.height() / 2))
 
         self.about_window = about.About()
 
@@ -787,7 +785,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         if target == 'none':
             bootloader_found = True
-        
+
         elif target == 'uefi':
             if bootloader[0] == 'syslinux':
                 if self.dependencies['syslinux']:
