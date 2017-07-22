@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'about_ui.ui'
 #
-# Created by: PyQt5 UI code generator 5.8
+# Created by: PyQt5 UI code generator 5.9
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_About(object):
     def setupUi(self, About):
         About.setObjectName("About")
-        About.resize(402, 172)
+        About.resize(402, 216)
         self.verticalLayout = QtWidgets.QVBoxLayout(About)
         self.verticalLayout.setObjectName("verticalLayout")
         self.label_title = QtWidgets.QLabel(About)
@@ -30,13 +30,15 @@ class Ui_About(object):
         self.label_title.setObjectName("label_title")
         self.verticalLayout.addWidget(self.label_title)
         self.label_text = QtWidgets.QLabel(About)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.MinimumExpanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(1)
         sizePolicy.setHeightForWidth(self.label_text.sizePolicy().hasHeightForWidth())
         self.label_text.setSizePolicy(sizePolicy)
+        self.label_text.setTextFormat(QtCore.Qt.RichText)
         self.label_text.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignTop)
         self.label_text.setWordWrap(True)
+        self.label_text.setOpenExternalLinks(True)
         self.label_text.setObjectName("label_text")
         self.verticalLayout.addWidget(self.label_text)
         self.label_copyright = QtWidgets.QLabel(About)
@@ -69,8 +71,7 @@ class Ui_About(object):
     def retranslateUi(self, About):
         _translate = QtCore.QCoreApplication.translate
         About.setWindowTitle(_translate("About", "About USBMaker"))
-        self.label_text.setText(_translate("About", "USBMaker is a utility to format and make bootable usb drives.\n"
-"It\'s written in Python 3 using PyQt5."))
+        self.label_text.setText(_translate("About", "<html><head/><body><p>USBMaker is a utility to format and make bootable usb drives.</p><p>It\'s written in Python 3 using PyQt5.</p><p>Project page: <a href=\"https://github.com/gmes/USBMaker\"><span style=\" text-decoration: underline; color:#4877b1;\">https://github.com/gmes/USBMaker</span></a></p></body></html>"))
         self.pushButton_license.setText(_translate("About", "License"))
         self.pushButton_about_qt.setText(_translate("About", "About Qt"))
         self.pushButton_close.setText(_translate("About", "Close"))
