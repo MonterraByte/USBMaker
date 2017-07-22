@@ -262,11 +262,20 @@
        </spacer>
       </item>
       <item>
-       <widget class="QPushButton" name="pushButton_log">
-        <property name="text">
-         <string>Log</string>
+       <spacer name="horizontalSpacer_4">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
         </property>
-       </widget>
+        <property name="sizeType">
+         <enum>QSizePolicy::Fixed</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>64</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
       </item>
       <item>
        <spacer name="horizontalSpacer">

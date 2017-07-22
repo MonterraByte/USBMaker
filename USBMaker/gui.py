@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'gui.ui'
 #
-# Created by: PyQt5 UI code generator 5.8
+# Created by: PyQt5 UI code generator 5.9
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -139,16 +139,15 @@ class Ui_MainWindow(object):
         self.horizontalLayout.addWidget(self.pushButton_about)
         spacerItem = QtWidgets.QSpacerItem(9, 20, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem)
-        self.pushButton_log = QtWidgets.QPushButton(self.centralWidget)
-        self.pushButton_log.setObjectName("pushButton_log")
-        self.horizontalLayout.addWidget(self.pushButton_log)
-        spacerItem1 = QtWidgets.QSpacerItem(69, 20, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Minimum)
+        spacerItem1 = QtWidgets.QSpacerItem(64, 20, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem1)
+        spacerItem2 = QtWidgets.QSpacerItem(69, 20, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout.addItem(spacerItem2)
         self.pushButton_start = QtWidgets.QPushButton(self.centralWidget)
         self.pushButton_start.setObjectName("pushButton_start")
         self.horizontalLayout.addWidget(self.pushButton_start)
-        spacerItem2 = QtWidgets.QSpacerItem(9, 20, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout.addItem(spacerItem2)
+        spacerItem3 = QtWidgets.QSpacerItem(9, 20, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout.addItem(spacerItem3)
         self.pushButton_close = QtWidgets.QPushButton(self.centralWidget)
         self.pushButton_close.setObjectName("pushButton_close")
         self.horizontalLayout.addWidget(self.pushButton_close)
@@ -175,7 +174,6 @@ class Ui_MainWindow(object):
         self.checkBox_bootmethod.setText(_translate("MainWindow", "Create a bootable disk using"))
         self.pushButton_filedialog.setText(_translate("MainWindow", "..."))
         self.pushButton_about.setText(_translate("MainWindow", "About..."))
-        self.pushButton_log.setText(_translate("MainWindow", "Log"))
         self.pushButton_start.setText(_translate("MainWindow", "Start"))
         self.pushButton_close.setText(_translate("MainWindow", "Close"))
 
