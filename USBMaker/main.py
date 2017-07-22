@@ -21,7 +21,7 @@ import os
 import re
 import subprocess
 import shutil
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore, QtGui
 from gui import Ui_MainWindow
 import uid_info
 import about
@@ -43,6 +43,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         super(MainWindow, self).__init__()
 
         self.setupUi(self)
+
+        if QtGui.QIcon.hasThemeIcon('usbmaker'):
+            self.setWindowIcon(QtGui.QIcon.fromTheme('usbmaker'))
 
         self.about_window = about.About()
 

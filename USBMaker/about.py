@@ -13,7 +13,7 @@
 #   You should have received a copy of the GNU General Public License
 #   along with USBMaker.  If not, see <https://www.gnu.org/licenses/>.
 
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtGui
 from about_ui import Ui_About
 from license_ui import Ui_License
 
@@ -25,6 +25,10 @@ class About(QtWidgets.QWidget, Ui_About):
         self.setupUi(self)
 
         self.license_window = License()
+
+        if QtGui.QIcon.hasThemeIcon('usbmaker'):
+            self.setWindowIcon(QtGui.QIcon.fromTheme('usbmaker'))
+            self.license_window.setWindowIcon(QtGui.QIcon.fromTheme('usbmaker'))
 
         self.pushButton_close.clicked.connect(self.close)
         self.pushButton_about_qt.clicked.connect(QtWidgets.QApplication.aboutQt)
