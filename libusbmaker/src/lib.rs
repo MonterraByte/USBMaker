@@ -19,6 +19,9 @@
 //!
 //! It was created for the [USBMaker](https://github.com/gmes/USBMaker) project.
 
+extern crate libparted_sys;
+pub mod parted;
+
 use std::path;
 use std::fs;
 use std::io;
