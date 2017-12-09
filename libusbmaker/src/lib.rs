@@ -15,6 +15,10 @@
 //   You should have received a copy of the GNU General Public License
 //   along with USBMaker.  If not, see <https://www.gnu.org/licenses/>.
 
+//! The `libusbmaker` library contains tools for partitioning and formatting storage drives.
+//!
+//! It was created for the [USBMaker](https://github.com/gmes/USBMaker) project.
+
 use std::path;
 use std::fs;
 use std::io;
