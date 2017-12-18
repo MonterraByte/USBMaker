@@ -23,14 +23,15 @@ use std::ffi::{CStr, CString};
 use std::os::raw::c_int;
 use libparted_sys::{ped_constraint_destroy, ped_constraint_exact, ped_device_destroy,
                     ped_device_get, ped_device_sync, ped_disk_add_partition, ped_disk_commit,
-                    ped_disk_destroy, ped_disk_new, ped_disk_new_fresh, ped_disk_probe,
-                    ped_disk_type_get, ped_file_system_type_get, ped_geometry_destroy,
-                    ped_geometry_new, ped_geometry_set_end, ped_partition_destroy,
-                    ped_partition_new, PedConstraint, PedDevice, PedDisk, PedDiskType,
+                    ped_disk_destroy, ped_disk_get_last_partition_num, ped_disk_get_partition,
+                    ped_disk_new, ped_disk_new_fresh, ped_disk_probe, ped_disk_type_get,
+                    ped_file_system_type_get, ped_geometry_destroy, ped_geometry_new,
+                    ped_geometry_set_end, ped_partition_destroy, ped_partition_new,
+                    ped_partition_set_name, PedConstraint, PedDevice, PedDisk, PedDiskType,
                     PedFileSystemType, PedGeometry, PedPartition, PedSector, _PedPartitionType};
 
-
 /// The `DiskType` type. Contains all the supported partition tables.
+#[derive(PartialEq)]
 pub enum DiskType {
     GPT,
     MSDOS,
@@ -262,6 +263,99 @@ pub fn create_partition(device: &CString, fs_type: FileSystemType) -> Result<c_i
     }
 }
 
+/// Changes the name of a partition.
+/// Partitions are counted starting at 1.
+///
+/// # Errors
+///
+/// This function will return a `PartedError` if it fails to change the name of the partition.
+/// Specifically, `PartedError::NulPedPartition` is returned if the target partition doesn't exist.
+///
+/// # Examples
+///
+/// ```
+/// let device: CString = CString::new("/dev/sdb").unwrap();
+/// let part_num: i32 = 1;
+/// let name: CString = CString::new("MyPartition").unwrap();
+/// set_partition_name(&device, part_num, &name);
+/// ```
+pub fn set_partition_name(
+    device: &CString,
+    partition_number: c_int,
+    name: &CString,
+) -> Result<c_int, PartedError> {
+    if partition_number < 1 {
+        return Err(PartedError::NullPedPartition);
+    }
+
+    let ped_device: *mut PedDevice = unsafe { ped_device_get(device.as_ptr()) };
+    if ped_device.is_null() {
+        return Err(PartedError::NullPedDevice);
+    }
+
+    let disk_type: DiskType = match probe_table(ped_device) {
+        Ok(disk_type) => disk_type,
+        Err(table) => {
+            unsafe { ped_device_destroy(ped_device) };
+            return Err(PartedError::UnknownPartitionTable(table));
+        }
+    };
+
+    // GPT is the only partition table in the DiskType enum that supports partition names.
+    if disk_type == DiskType::GPT {
+        let ped_disk: *mut PedDisk = unsafe { ped_disk_new(ped_device) };
+        if ped_disk.is_null() {
+            unsafe { ped_device_destroy(ped_device) };
+            return Err(PartedError::NullPedDisk);
+        }
+
+        if unsafe { ped_disk_get_last_partition_num(ped_disk) } < partition_number {
+            unsafe {
+                ped_disk_destroy(ped_disk);
+                ped_device_destroy(ped_device);
+            }
+            return Err(PartedError::NullPedPartition);
+        }
+
+        let ped_partition: *mut PedPartition =
+            unsafe { ped_disk_get_partition(ped_disk, partition_number) };
+
+        if ped_partition.is_null() {
+            unsafe {
+                ped_disk_destroy(ped_disk);
+                ped_device_destroy(ped_device);
+            }
+            return Err(PartedError::NullPedPartition);
+        }
+
+        if unsafe { ped_partition_set_name(ped_partition, name.as_ptr()) } == 0 {
+            unsafe {
+                ped_partition_destroy(ped_partition);
+                ped_disk_destroy(ped_disk);
+                ped_device_destroy(ped_device);
+            }
+            return Err(PartedError::NamePartitionFail);
+        }
+
+        let result: c_int = unsafe { ped_disk_commit(ped_disk) };
+
+        unsafe {
+            ped_partition_destroy(ped_partition);
+            ped_disk_destroy(ped_disk);
+            ped_device_destroy(ped_device);
+        }
+
+        if result == 0 {
+            Err(PartedError::CommitFail)
+        } else {
+            Ok(result)
+        }
+    } else {
+        unsafe { ped_device_destroy(ped_device) };
+        return Err(PartedError::NotSupported);
+    }
+}
+
 /// Synchronizes cached writes to persistent storage.
 ///
 /// # Errors
@@ -316,8 +410,10 @@ pub enum PartedError {
     NullPedConstraint,
     CommitFail,
     AddPartitionFail,
+    NamePartitionFail,
     SyncFail,
     UnknownPartitionTable(String),
+    NotSupported,
 }
 
 impl fmt::Display for PartedError {
@@ -338,9 +434,13 @@ impl fmt::Display for PartedError {
             }
             &PartedError::CommitFail => write!(f, "Libparted failed to commit the changes"),
             &PartedError::AddPartitionFail => write!(f, "Libparted failed to add the partition"),
+            &PartedError::NamePartitionFail => write!(f, "Libparted failed to name the partition"),
             &PartedError::SyncFail => write!(f, "Libparted failed to flush the write cache"),
             &PartedError::UnknownPartitionTable(ref table) => {
                 write!(f, "Unknown partition table: {}", table)
+            }
+            &PartedError::NotSupported => {
+                write!(f, "Operation is not supported in this configuration")
             }
         }
     }
@@ -360,8 +460,10 @@ impl error::Error for PartedError {
             &PartedError::NullPedConstraint => "Libparted returned a null NullPedConstraint",
             &PartedError::CommitFail => "Libparted failed to commit the changes",
             &PartedError::AddPartitionFail => "Libparted failed to add the partition",
+            &PartedError::NamePartitionFail => "Libparted failed to name the partition",
             &PartedError::SyncFail => "Libparted failed to flush the write cache",
             &PartedError::UnknownPartitionTable(ref _table) => "Unknown partition table",
+            &PartedError::NotSupported => "Operation is not supported in this configuration",
         }
     }
 }
