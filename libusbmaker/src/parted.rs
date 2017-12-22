@@ -26,9 +26,10 @@ use libparted_sys::{ped_constraint_destroy, ped_constraint_exact, ped_device_des
                     ped_disk_destroy, ped_disk_get_last_partition_num, ped_disk_get_partition,
                     ped_disk_new, ped_disk_new_fresh, ped_disk_probe, ped_disk_type_get,
                     ped_file_system_type_get, ped_geometry_destroy, ped_geometry_new,
-                    ped_geometry_set_end, ped_partition_destroy, ped_partition_new,
-                    ped_partition_set_name, PedConstraint, PedDevice, PedDisk, PedDiskType,
-                    PedFileSystemType, PedGeometry, PedPartition, PedSector, _PedPartitionType};
+                    ped_geometry_set_end, ped_partition_destroy, ped_partition_is_flag_available,
+                    ped_partition_new, ped_partition_set_flag, ped_partition_set_name,
+                    PedConstraint, PedDevice, PedDisk, PedDiskType, PedFileSystemType,
+                    PedGeometry, PedPartition, PedSector, _PedPartitionFlag, _PedPartitionType};
 
 /// The `DiskType` type. Contains all the supported partition tables.
 #[derive(PartialEq)]
@@ -116,8 +117,7 @@ pub fn create_label(device: &CString, disk_type: DiskType) -> Result<c_int, Part
         return Err(PartedError::NullPedDevice);
     }
 
-    let ped_disk_type: *mut PedDiskType =
-        unsafe { ped_disk_type_get(disk_type.cstr().as_ptr()) };
+    let ped_disk_type: *mut PedDiskType = unsafe { ped_disk_type_get(disk_type.cstr().as_ptr()) };
     if ped_disk_type.is_null() {
         unsafe { ped_device_destroy(ped_device) };
         return Err(PartedError::NullPedDiskType);
@@ -275,9 +275,9 @@ pub fn create_partition(device: &CString, fs_type: FileSystemType) -> Result<c_i
 ///
 /// ```
 /// let device: CString = CString::new("/dev/sdb").unwrap();
-/// let part_num: i32 = 1;
+/// let partition_number: i32 = 1;
 /// let name: CString = CString::new("MyPartition").unwrap();
-/// set_partition_name(&device, part_num, &name);
+/// set_partition_name(&device, partition_number, &name);
 /// ```
 pub fn set_partition_name(
     device: &CString,
@@ -352,7 +352,105 @@ pub fn set_partition_name(
         }
     } else {
         unsafe { ped_device_destroy(ped_device) };
-        return Err(PartedError::NotSupported);
+        Err(PartedError::NotSupported)
+    }
+}
+
+/// Sets a partition as BIOS bootable.
+///
+/// For GPT, the "legacy_boot" flag is set. In all others the "boot" flag is set instead.
+/// Partitions are counted starting at 1.
+///
+/// # Errors
+///
+/// This function will return a `PartedError` if it fails to set the flag.
+/// Specifically, `PartedError::NulPedPartition` is returned if the target partition doesn't exist.
+///
+/// # Examples
+///
+/// ```
+/// let device: CString = CString::new("/dev/sdb").unwrap();
+/// let partition_number: i32 = 1;
+/// set_bootable_flag(&device, partition_number);
+/// ```
+pub fn set_bootable_flag(device: &CString, partition_number: c_int) -> Result<c_int, PartedError> {
+    if partition_number < 1 {
+        return Err(PartedError::NullPedPartition);
+    }
+
+    let ped_device: *mut PedDevice = unsafe { ped_device_get(device.as_ptr()) };
+    if ped_device.is_null() {
+        return Err(PartedError::NullPedDevice);
+    }
+
+    let disk_type: DiskType = match probe_table(ped_device) {
+        Ok(disk_type) => disk_type,
+        Err(table) => {
+            unsafe { ped_device_destroy(ped_device) };
+            return Err(PartedError::UnknownPartitionTable(table));
+        }
+    };
+
+    let partition_flag: _PedPartitionFlag = match disk_type {
+        DiskType::GPT => _PedPartitionFlag::PED_PARTITION_LEGACY_BOOT,
+        _ => _PedPartitionFlag::PED_PARTITION_BOOT,
+    };
+
+    let ped_disk: *mut PedDisk = unsafe { ped_disk_new(ped_device) };
+    if ped_disk.is_null() {
+        unsafe { ped_device_destroy(ped_device) };
+        return Err(PartedError::NullPedDisk);
+    }
+
+    if unsafe { ped_disk_get_last_partition_num(ped_disk) } < partition_number {
+        unsafe {
+            ped_disk_destroy(ped_disk);
+            ped_device_destroy(ped_device);
+        }
+        return Err(PartedError::NullPedPartition);
+    }
+
+    let ped_partition: *mut PedPartition =
+        unsafe { ped_disk_get_partition(ped_disk, partition_number) };
+
+    if ped_partition.is_null() {
+        unsafe {
+            ped_disk_destroy(ped_disk);
+            ped_device_destroy(ped_device);
+        }
+        return Err(PartedError::NullPedPartition);
+    }
+
+    if unsafe { ped_partition_is_flag_available(ped_partition, partition_flag) } == 1 {
+        if unsafe { ped_partition_set_flag(ped_partition, partition_flag, 1) } == 0 {
+            unsafe {
+                ped_partition_destroy(ped_partition);
+                ped_disk_destroy(ped_disk);
+                ped_device_destroy(ped_device);
+            }
+            return Err(PartedError::SetFlagFail);
+        }
+
+        let result: c_int = unsafe { ped_disk_commit(ped_disk) };
+
+        unsafe {
+            ped_partition_destroy(ped_partition);
+            ped_disk_destroy(ped_disk);
+            ped_device_destroy(ped_device);
+        }
+
+        if result == 0 {
+            Err(PartedError::CommitFail)
+        } else {
+            Ok(result)
+        }
+    } else {
+        unsafe {
+            ped_partition_destroy(ped_partition);
+            ped_disk_destroy(ped_disk);
+            ped_device_destroy(ped_device)
+        };
+        Err(PartedError::NotSupported)
     }
 }
 
@@ -411,6 +509,7 @@ pub enum PartedError {
     CommitFail,
     AddPartitionFail,
     NamePartitionFail,
+    SetFlagFail,
     SyncFail,
     UnknownPartitionTable(String),
     NotSupported,
@@ -435,6 +534,7 @@ impl fmt::Display for PartedError {
             &PartedError::CommitFail => write!(f, "Libparted failed to commit the changes"),
             &PartedError::AddPartitionFail => write!(f, "Libparted failed to add the partition"),
             &PartedError::NamePartitionFail => write!(f, "Libparted failed to name the partition"),
+            &PartedError::SetFlagFail => write!(f, "Libparted failed to set the state of a flag"),
             &PartedError::SyncFail => write!(f, "Libparted failed to flush the write cache"),
             &PartedError::UnknownPartitionTable(ref table) => {
                 write!(f, "Unknown partition table: {}", table)
@@ -461,6 +561,7 @@ impl error::Error for PartedError {
             &PartedError::CommitFail => "Libparted failed to commit the changes",
             &PartedError::AddPartitionFail => "Libparted failed to add the partition",
             &PartedError::NamePartitionFail => "Libparted failed to name the partition",
+            &PartedError::SetFlagFail => "Libparted failed to set the state of a flag",
             &PartedError::SyncFail => "Libparted failed to flush the write cache",
             &PartedError::UnknownPartitionTable(ref _table) => "Unknown partition table",
             &PartedError::NotSupported => "Operation is not supported in this configuration",
