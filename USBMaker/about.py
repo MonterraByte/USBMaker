@@ -1,3 +1,5 @@
+#   Copyright © 2017-2018 Joaquim Monteiro
+#
 #   This file is part of USBMaker.
 #
 #   USBMaker is free software: you can redistribute it and/or modify

@@ -47,7 +47,7 @@ class Ui_About(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.label_copyright.sizePolicy().hasHeightForWidth())
         self.label_copyright.setSizePolicy(sizePolicy)
-        self.label_copyright.setText("Copyright © 2017 Joaquim Monteiro")
+        self.label_copyright.setText("Copyright © 2017-2018 Joaquim Monteiro")
         self.label_copyright.setAlignment(QtCore.Qt.AlignBottom|QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft)
         self.label_copyright.setObjectName("label_copyright")
         self.verticalLayout.addWidget(self.label_copyright)
@@ -75,4 +75,3 @@ class Ui_About(object):
         self.pushButton_license.setText(_translate("About", "License"))
         self.pushButton_about_qt.setText(_translate("About", "About Qt"))
         self.pushButton_close.setText(_translate("About", "Close"))
-
