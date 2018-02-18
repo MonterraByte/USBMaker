@@ -5,4 +5,6 @@ authors = ["Joaquim Monteiro <joaquim.monteiro@protonmail.com>"]
 
 [dependencies]
 libusbmaker = { path = "libusbmaker" }
+ansi_term = "0.10"
 clap = "2"
+indicatif = "0.9"
