@@ -85,7 +85,7 @@ fn main() {
                 sub_matches.is_present("machine-readable"),
             ) {
                 Ok(_) => (),
-                Err(e) => exit_with_error(e),
+                Err(err) => exit_with_error(err),
             }
         }
         _ => (),
