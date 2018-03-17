@@ -78,7 +78,9 @@ pub fn dd(input: &Path, output: &Path, assume_yes: bool, disable_ui: bool) -> Re
             let progress_bar = ProgressBar::new(file_size);
             progress_bar.set_draw_target(ProgressDrawTarget::stdout());
             progress_bar.set_style(
-                ProgressStyle::default_bar().template("{spinner} {wide_bar} {pos}/{len}"),
+                ProgressStyle::default_bar()
+                    .template("{spinner} {percent:3}%▕{wide_bar}▏{bytes}/{total_bytes}")
+                    .progress_chars("█▉▊▋▌▍▎▏  "),
             );
 
             loop {

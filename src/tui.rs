@@ -21,8 +21,8 @@ use std::io::{self, Write};
 use ansi_term::{Colour, Style};
 
 pub fn prompt(message: &str, default: bool) -> bool {
-    let message_style: Style = Colour::White.bold().underline();
-    let prompt_style: Style = Colour::Cyan.bold();
+    let message_style: Style = Colour::White.bold();
+    let prompt_style: Style = Colour::Blue.normal();
     let mut input: String = String::with_capacity(2);
     loop {
         match default {
