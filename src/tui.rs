@@ -61,3 +61,8 @@ pub fn prompt(message: &str, default: bool) -> bool {
         input.clear()
     }
 }
+
+pub fn warn(warning: &str) {
+    let warning_style: Style = Colour::Red.underline();
+    eprintln!("{}", warning_style.paint(warning));
+}

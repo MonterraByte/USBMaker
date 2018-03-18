@@ -1,7 +1,0 @@
-[package]
-name = "libusbmaker"
-version = "0.1.0"
-authors = ["Joaquim Monteiro <joaquim.monteiro@protonmail.com>"]
-
-[dependencies]
-libparted-sys = "0.1"

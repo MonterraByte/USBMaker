@@ -19,9 +19,11 @@ extern crate ansi_term;
 #[macro_use]
 extern crate clap;
 extern crate indicatif;
+extern crate libparted;
 
 mod dd;
 mod error;
+mod partitioning;
 mod tui;
 
 use std::path::PathBuf;
@@ -35,7 +37,7 @@ fn main() {
         .author(crate_authors!())
         .version(crate_version!())
         .about("Create bootable usb drives")
-        .subcommand(
+        .subcommands(vec![
             SubCommand::with_name("dd")
                 .author(crate_authors!())
                 .version(crate_version!())
@@ -62,7 +64,29 @@ fn main() {
                         .takes_value(false)
                         .help("Prints output that can be interpreted by other programs (for non-interactive use)")
                 ]),
-        )
+            SubCommand::with_name("table")
+                .author(crate_authors!())
+                .version(crate_version!())
+                .about("Creates a new partition table, erasing all data on the device")
+                .args(&[
+                    Arg::with_name("device")
+                        .takes_value(true)
+                        .required(true)
+                        .index(1)
+                        .help("Device to modify"),
+                    Arg::with_name("type")
+                        .takes_value(true)
+                        .required(true)
+                        .index(2)
+                        .help("Type of partition table to create")
+                        .possible_values(&["gpt", "msdos"]),
+                    Arg::with_name("yes")
+                        .short("y")
+                        .long("yes")
+                        .takes_value(false)
+                        .help("Confirm prompts automatically"),
+                ])
+        ])
         .get_matches();
 
     match matches.subcommand() {
@@ -83,6 +107,20 @@ fn main() {
                 &output,
                 sub_matches.is_present("yes"),
                 sub_matches.is_present("machine-readable"),
+            ) {
+                Ok(_) => (),
+                Err(err) => exit_with_error(err),
+            }
+        }
+        ("table", Some(sub_matches)) => {
+            let device: PathBuf =
+                PathBuf::from(sub_matches.value_of("device").expect("No device specified"));
+            match partitioning::create_table(
+                &device,
+                sub_matches
+                    .value_of("type")
+                    .expect("No partition table type specified"),
+                sub_matches.is_present("yes"),
             ) {
                 Ok(_) => (),
                 Err(err) => exit_with_error(err),

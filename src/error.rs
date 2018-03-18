@@ -33,6 +33,14 @@ pub enum DdError {
     WriteError(io::Error),
 }
 
+pub enum PartitioningError {
+    CanceledByUser,
+    CommitError(io::Error),
+    DeviceOpenError(io::Error),
+    DiskOpenError(io::Error),
+    UnknownTableType(String),
+}
+
 impl USBMakerError for DdError {
     fn error_code(&self) -> i32 {
         match self {
@@ -43,6 +51,18 @@ impl USBMakerError for DdError {
             &DdError::ReadError(_) => 5,
             &DdError::SyncError(_) => 6,
             &DdError::WriteError(_) => 7,
+        }
+    }
+}
+
+impl USBMakerError for PartitioningError {
+    fn error_code(&self) -> i32 {
+        match self {
+            &PartitioningError::CanceledByUser => 1,
+            &PartitioningError::CommitError(_) => 8,
+            &PartitioningError::DeviceOpenError(_) => 9,
+            &PartitioningError::DiskOpenError(_) => 10,
+            &PartitioningError::UnknownTableType(_) => 11,
         }
     }
 }
@@ -70,6 +90,28 @@ impl fmt::Display for DdError {
             }
             &DdError::WriteError(ref e) => {
                 write!(f, "Failed to write to the output file: {}", e.description())
+            }
+        }
+    }
+}
+
+impl fmt::Display for PartitioningError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            &PartitioningError::CanceledByUser => {
+                write!(f, "The operation was canceled by the user")
+            }
+            &PartitioningError::CommitError(ref e) => {
+                write!(f, "Failed to commit changes to disk: {}", e.description())
+            }
+            &PartitioningError::DeviceOpenError(ref e) => {
+                write!(f, "Failed open the target device: {}", e.description())
+            }
+            &PartitioningError::DiskOpenError(ref e) => {
+                write!(f, "Failed open the partition table: {}", e.description())
+            }
+            &PartitioningError::UnknownTableType(ref s) => {
+                write!(f, "Unknown partition table type: {}", s)
             }
         }
     }
