@@ -36,8 +36,11 @@ pub enum DdError {
 pub enum PartitioningError {
     CanceledByUser,
     CommitError(io::Error),
+    ConstraintError,
     DeviceOpenError(io::Error),
     DiskOpenError(io::Error),
+    PartitionAddError(io::Error),
+    PartitionCreateError(io::Error),
     UnknownTableType(String),
 }
 
@@ -60,9 +63,12 @@ impl USBMakerError for PartitioningError {
         match self {
             &PartitioningError::CanceledByUser => 1,
             &PartitioningError::CommitError(_) => 8,
-            &PartitioningError::DeviceOpenError(_) => 9,
-            &PartitioningError::DiskOpenError(_) => 10,
-            &PartitioningError::UnknownTableType(_) => 11,
+            &PartitioningError::ConstraintError => 9,
+            &PartitioningError::DeviceOpenError(_) => 10,
+            &PartitioningError::DiskOpenError(_) => 11,
+            &PartitioningError::PartitionAddError(_) => 12,
+            &PartitioningError::PartitionCreateError(_) => 13,
+            &PartitioningError::UnknownTableType(_) => 14,
         }
     }
 }
@@ -104,11 +110,20 @@ impl fmt::Display for PartitioningError {
             &PartitioningError::CommitError(ref e) => {
                 write!(f, "Failed to commit changes to disk: {}", e.description())
             }
+            &PartitioningError::ConstraintError => write!(f, "Failed to get the constraint"),
             &PartitioningError::DeviceOpenError(ref e) => {
                 write!(f, "Failed open the target device: {}", e.description())
             }
             &PartitioningError::DiskOpenError(ref e) => {
                 write!(f, "Failed open the partition table: {}", e.description())
+            }
+            &PartitioningError::PartitionAddError(ref e) => write!(
+                f,
+                "Failed to add partition to partition table: {}",
+                e.description()
+            ),
+            &PartitioningError::PartitionCreateError(ref e) => {
+                write!(f, "Failed create partition in memory: {}", e.description())
             }
             &PartitioningError::UnknownTableType(ref s) => {
                 write!(f, "Unknown partition table type: {}", s)

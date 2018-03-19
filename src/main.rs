@@ -80,6 +80,11 @@ fn main() {
                         .index(2)
                         .help("Type of partition table to create")
                         .possible_values(&["gpt", "msdos"]),
+                    Arg::with_name("partition")
+                        .short("p")
+                        .long("partition")
+                        .takes_value(false)
+                        .help("Create a partition occupying the entire device"),
                     Arg::with_name("yes")
                         .short("y")
                         .long("yes")
@@ -121,6 +126,7 @@ fn main() {
                     .value_of("type")
                     .expect("No partition table type specified"),
                 sub_matches.is_present("yes"),
+                sub_matches.is_present("partition"),
             ) {
                 Ok(_) => (),
                 Err(err) => exit_with_error(err),

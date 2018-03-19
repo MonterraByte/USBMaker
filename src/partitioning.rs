@@ -18,7 +18,7 @@
 use std::path::Path;
 
 use indicatif::{ProgressBar, ProgressDrawTarget};
-use libparted::{Device, Disk, DiskType};
+use libparted::{Constraint, Device, Disk, DiskType, Partition, PartitionType};
 
 use error::PartitioningError;
 use tui;
@@ -27,6 +27,7 @@ pub fn create_table(
     device_path: &Path,
     table_type_str: &str,
     assume_yes: bool,
+    partition: bool,
 ) -> Result<(), PartitioningError> {
     let table_type: DiskType = match DiskType::get(table_type_str) {
         Some(table_type) => table_type,
@@ -55,10 +56,42 @@ pub fn create_table(
         Err(err) => return Err(PartitioningError::DeviceOpenError(err)),
     };
 
+    let length: i64 = device.length() as i64;
+    let sector_size: i64 = device.sector_size() as i64;
+
     let mut disk: Disk = match Disk::new_fresh(&mut device, table_type) {
         Ok(disk) => disk,
         Err(err) => return Err(PartitioningError::DiskOpenError(err)),
     };
+
+    if partition {
+        let mebibyte: i64 = 1048576 / sector_size;
+
+        let end: i64 = match table_type_str {
+            "gpt" => length - mebibyte - 1,
+            _ => length - 1,
+        };
+        let mut partition: Partition = match Partition::new(
+            &disk,
+            PartitionType::PED_PARTITION_NORMAL,
+            None,
+            mebibyte,
+            end,
+        ) {
+            Ok(partition) => partition,
+            Err(err) => return Err(PartitioningError::PartitionCreateError(err)),
+        };
+
+        let constraint: Constraint = match disk.constraint_any() {
+            Some(constraint) => constraint,
+            None => return Err(PartitioningError::ConstraintError),
+        };
+
+        match disk.add_partition(&mut partition, &constraint) {
+            Ok(_) => (),
+            Err(err) => return Err(PartitioningError::PartitionAddError(err)),
+        };
+    }
 
     match disk.commit() {
         Ok(_) => {
