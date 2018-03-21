@@ -39,7 +39,7 @@ pub fn dd(input: &Path, output: &Path, assume_yes: bool, disable_ui: bool) -> Re
     };
 
     if !assume_yes && output.is_file() {
-        match tui::prompt(&*format!("Do you want to overwrite {:?}?", output), false) {
+        match tui::prompt(&*format!("Do you want to overwrite {}?", output.to_string_lossy()), false) {
             true => (),
             false => return Err(DdError::CanceledByUser),
         }

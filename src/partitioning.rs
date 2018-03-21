@@ -39,7 +39,10 @@ pub fn create_table(
     };
 
     if !assume_yes {
-        tui::warn("This will wipe all data on the target device.");
+        tui::warn(&*format!(
+            "This will wipe all data on {}.",
+            device_path.to_string_lossy()
+        ));
         match tui::prompt(&*format!("Do you want to continue?"), false) {
             true => (),
             false => return Err(PartitioningError::CanceledByUser),
