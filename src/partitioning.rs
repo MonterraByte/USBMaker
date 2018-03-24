@@ -32,9 +32,9 @@ pub fn create_table(
     let table_type: DiskType = match DiskType::get(table_type_str) {
         Some(table_type) => table_type,
         None => {
-            return Err(PartitioningError::UnknownTableType(String::from(
-                table_type_str,
-            )))
+            return Err(PartitioningError::UnknownTableType(
+                table_type_str.to_owned(),
+            ))
         }
     };
 
