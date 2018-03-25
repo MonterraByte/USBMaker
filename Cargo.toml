@@ -8,3 +8,7 @@ ansi_term = "0.11"
 clap = "2"
 indicatif = "0.9"
 libparted = "0.1"
+
+[profile.release]
+codegen-units = 1
+lto = true
