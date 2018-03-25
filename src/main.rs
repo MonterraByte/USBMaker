@@ -23,6 +23,7 @@ extern crate libparted;
 
 mod dd;
 mod error;
+mod formatting;
 mod partitioning;
 mod tui;
 
@@ -63,6 +64,44 @@ fn main() {
                         .long("machine-readable")
                         .takes_value(false)
                         .help("Prints output that can be interpreted by other programs (for non-interactive use)")
+                ]),
+            SubCommand::with_name("format")
+                .author(crate_authors!())
+                .version(crate_version!())
+                .about("Creates a filesystem on a partition")
+                .args(&[
+                    Arg::with_name("partition")
+                        .takes_value(true)
+                        .required(true)
+                        .index(1)
+                        .help("Partition in which the filesystem will be created"),
+                    Arg::with_name("filesystem")
+                        .takes_value(true)
+                        .required(true)
+                        .index(2)
+                        .help("Type of filesystem to create")
+                        .possible_values(&["btrfs", "exfat", "ext2", "ext3", "ext4", "f2fs", "fat32", "ntfs", "udf", "xfs"]),
+                    Arg::with_name("badblocks")
+                        .short("b")
+                        .long("badblocks")
+                        .takes_value(false)
+                        .help("Checks the device for bad blocks before formatting"),
+                    Arg::with_name("device")
+                        .short("d")
+                        .long("device")
+                        .takes_value(true)
+                        .help("Treat target as device, creating a partition table and one partition before formatting")
+                        .possible_values(&["gpt", "msdos"]),
+                    Arg::with_name("label")
+                        .short("l")
+                        .long("label")
+                        .takes_value(true)
+                        .help("Sets the label of the partition"),
+                    Arg::with_name("yes")
+                        .short("y")
+                        .long("yes")
+                        .takes_value(false)
+                        .help("Confirm prompts automatically"),
                 ]),
             SubCommand::with_name("table")
                 .author(crate_authors!())
@@ -117,6 +156,27 @@ fn main() {
                 Err(err) => exit_with_error(err),
             }
         }
+        ("format", Some(sub_matches)) => {
+            let partition: PathBuf = PathBuf::from(
+                sub_matches
+                    .value_of("partition")
+                    .expect("No partition specified"),
+            );
+
+            match formatting::format(
+                &partition,
+                sub_matches
+                    .value_of("filesystem")
+                    .expect("No filesystem specified"),
+                sub_matches.is_present("badblocks"),
+                sub_matches.value_of("device"),
+                sub_matches.value_of("label"),
+                sub_matches.is_present("yes"),
+            ) {
+                Ok(_) => (),
+                Err(err) => exit_with_error(err),
+            }
+        }
         ("table", Some(sub_matches)) => {
             let device: PathBuf =
                 PathBuf::from(sub_matches.value_of("device").expect("No device specified"));
@@ -127,6 +187,7 @@ fn main() {
                     .expect("No partition table type specified"),
                 sub_matches.is_present("yes"),
                 sub_matches.is_present("partition"),
+                None,
             ) {
                 Ok(_) => (),
                 Err(err) => exit_with_error(err),

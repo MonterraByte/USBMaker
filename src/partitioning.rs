@@ -15,10 +15,10 @@
 //   You should have received a copy of the GNU General Public License
 //   along with USBMaker.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use indicatif::{ProgressBar, ProgressDrawTarget};
-use libparted::{Constraint, Device, Disk, DiskType, Partition, PartitionType};
+use libparted::{Constraint, Device, Disk, DiskType, FileSystemType, Partition, PartitionType};
 
 use error::PartitioningError;
 use tui;
@@ -28,7 +28,8 @@ pub fn create_table(
     table_type_str: &str,
     assume_yes: bool,
     partition: bool,
-) -> Result<(), PartitioningError> {
+    fs_type: Option<FileSystemType>,
+) -> Result<PathBuf, PartitioningError> {
     let table_type: DiskType = match DiskType::get(table_type_str) {
         Some(table_type) => table_type,
         None => {
@@ -48,6 +49,8 @@ pub fn create_table(
             false => return Err(PartitioningError::CanceledByUser),
         }
     }
+
+    let mut return_path: PathBuf = device_path.to_path_buf();
 
     let spinner: ProgressBar = ProgressBar::new_spinner();
     spinner.set_draw_target(ProgressDrawTarget::stderr());
@@ -77,7 +80,7 @@ pub fn create_table(
         let mut partition: Partition = match Partition::new(
             &disk,
             PartitionType::PED_PARTITION_NORMAL,
-            None,
+            fs_type.as_ref(),
             mebibyte,
             end,
         ) {
@@ -94,12 +97,17 @@ pub fn create_table(
             Ok(_) => (),
             Err(err) => return Err(PartitioningError::PartitionAddError(err)),
         };
+
+        match partition.get_path() {
+            Some(path) => return_path = path.to_path_buf(),
+            None => (),
+        }
     }
 
     match disk.commit() {
         Ok(_) => {
-            spinner.finish_with_message("Partition table successfully created");
-            Ok(())
+            spinner.finish_with_message("Creating partition table... Done");
+            Ok(return_path)
         }
         Err(err) => Err(PartitioningError::CommitError(err)),
     }

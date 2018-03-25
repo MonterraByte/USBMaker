@@ -33,6 +33,16 @@ pub enum DdError {
     WriteError(io::Error),
 }
 
+pub enum FormatError {
+    CanceledByUser,
+    CommandExecError(io::Error),
+    CommandFailed(Option<i32>),
+    PartitioningError(PartitioningError),
+    UnknownFilesystemType(String),
+    WipefsExecError(io::Error),
+    WipefsFailed(Option<i32>),
+}
+
 pub enum PartitioningError {
     CanceledByUser,
     CommitError(io::Error),
@@ -54,6 +64,20 @@ impl USBMakerError for DdError {
             &DdError::ReadError(_) => 5,
             &DdError::SyncError(_) => 6,
             &DdError::WriteError(_) => 7,
+        }
+    }
+}
+
+impl USBMakerError for FormatError {
+    fn error_code(&self) -> i32 {
+        match self {
+            &FormatError::CanceledByUser => 1,
+            &FormatError::CommandExecError(_) => 15,
+            &FormatError::CommandFailed(_) => 16,
+            &FormatError::PartitioningError(ref err) => err.error_code(),
+            &FormatError::UnknownFilesystemType(_) => 17,
+            &FormatError::WipefsExecError(_) => 18,
+            &FormatError::WipefsFailed(_) => 19,
         }
     }
 }
@@ -97,6 +121,32 @@ impl fmt::Display for DdError {
             &DdError::WriteError(ref e) => {
                 write!(f, "Failed to write to the output file: {}", e.description())
             }
+        }
+    }
+}
+
+impl fmt::Display for FormatError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            &FormatError::CanceledByUser => write!(f, "The operation was canceled by the user"),
+            &FormatError::CommandExecError(ref e) => {
+                write!(f, "Failed to execute command: {}", e.description())
+            }
+            &FormatError::CommandFailed(status) => match status {
+                Some(code) => write!(f, "Command exited with code: {}", code),
+                None => write!(f, "Command terminated by signal"),
+            },
+            &FormatError::PartitioningError(ref e) => e.fmt(f),
+            &FormatError::UnknownFilesystemType(ref s) => {
+                write!(f, "Unknown filesystem type: {}", s)
+            }
+            &FormatError::WipefsExecError(ref e) => {
+                write!(f, "Failed to execute wipefs: {}", e.description())
+            }
+            &FormatError::WipefsFailed(status) => match status {
+                Some(code) => write!(f, "Wipefs exited with code: {}", code),
+                None => write!(f, "Wipefs terminated by signal"),
+            },
         }
     }
 }
