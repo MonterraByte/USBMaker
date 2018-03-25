@@ -98,7 +98,7 @@ pub fn create_table(
 
     match disk.commit() {
         Ok(_) => {
-            spinner.finish_with_message("Creating partition table... Done");
+            spinner.finish_with_message("Partition table successfully created");
             Ok(())
         }
         Err(err) => Err(PartitioningError::CommitError(err)),
