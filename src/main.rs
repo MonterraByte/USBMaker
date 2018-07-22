@@ -42,7 +42,7 @@ fn main() {
             SubCommand::with_name("dd")
                 .author(crate_authors!())
                 .version(crate_version!())
-                .about("Copies the contents of a file/device to another file/device")
+                .about("Copy the contents of a file/device to another file/device")
                 .args(&[
                     Arg::with_name("input")
                         .takes_value(true)
@@ -63,12 +63,12 @@ fn main() {
                         .short("M")
                         .long("machine-readable")
                         .takes_value(false)
-                        .help("Prints output that can be interpreted by other programs (for non-interactive use)")
+                        .help("Print how many bytes have been written in total each iteration (very verbose)")
                 ]),
             SubCommand::with_name("format")
                 .author(crate_authors!())
                 .version(crate_version!())
-                .about("Creates a filesystem on a partition")
+                .about("Create a filesystem on a partition")
                 .args(&[
                     Arg::with_name("partition")
                         .takes_value(true)
@@ -85,7 +85,7 @@ fn main() {
                         .short("b")
                         .long("badblocks")
                         .takes_value(false)
-                        .help("Checks the device for bad blocks before formatting"),
+                        .help("Check the device for bad blocks before formatting (only supported by ext{2,3,4}, fat32 and ntfs)"),
                     Arg::with_name("device")
                         .short("d")
                         .long("device")
@@ -96,17 +96,17 @@ fn main() {
                         .short("l")
                         .long("label")
                         .takes_value(true)
-                        .help("Sets the label of the partition"),
+                        .help("Set the label of the filesystem"),
                     Arg::with_name("yes")
                         .short("y")
                         .long("yes")
                         .takes_value(false)
                         .help("Confirm prompts automatically"),
                 ]),
-            SubCommand::with_name("table")
+            SubCommand::with_name("create-table")
                 .author(crate_authors!())
                 .version(crate_version!())
-                .about("Creates a new partition table, erasing all data on the device")
+                .about("Create a new partition table, erasing all data on the device")
                 .args(&[
                     Arg::with_name("device")
                         .takes_value(true)
@@ -177,7 +177,7 @@ fn main() {
                 Err(err) => exit_with_error(err),
             }
         }
-        ("table", Some(sub_matches)) => {
+        ("create-table", Some(sub_matches)) => {
             let device: PathBuf =
                 PathBuf::from(sub_matches.value_of("device").expect("No device specified"));
             match partitioning::create_table(
