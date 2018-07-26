@@ -15,7 +15,6 @@
 //   You should have received a copy of the GNU General Public License
 //   along with USBMaker.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::error::Error;
 use std::fmt;
 use std::io;
 
@@ -101,26 +100,14 @@ impl fmt::Display for DdError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             &DdError::CanceledByUser => write!(f, "The operation was canceled by the user"),
-            &DdError::InputFileMetadataError(ref e) => write!(
-                f,
-                "Failed to get the input file's metadata: {}",
-                e.description()
-            ),
-            &DdError::InputFileOpenError(ref e) => {
-                write!(f, "Failed open the input file: {}", e.description())
+            &DdError::InputFileMetadataError(ref e) => {
+                write!(f, "Failed to get the input file's metadata: {}", e)
             }
-            &DdError::OutputFileOpenError(ref e) => {
-                write!(f, "Failed open the output file: {}", e.description())
-            }
-            &DdError::ReadError(ref e) => {
-                write!(f, "Failed to read from the input file: {}", e.description())
-            }
-            &DdError::SyncError(ref e) => {
-                write!(f, "Failed to sync changes to disk: {}", e.description())
-            }
-            &DdError::WriteError(ref e) => {
-                write!(f, "Failed to write to the output file: {}", e.description())
-            }
+            &DdError::InputFileOpenError(ref e) => write!(f, "Failed open the input file: {}", e),
+            &DdError::OutputFileOpenError(ref e) => write!(f, "Failed open the output file: {}", e),
+            &DdError::ReadError(ref e) => write!(f, "Failed to read from the input file: {}", e),
+            &DdError::SyncError(ref e) => write!(f, "Failed to sync changes to disk: {}", e),
+            &DdError::WriteError(ref e) => write!(f, "Failed to write to the output file: {}", e),
         }
     }
 }
@@ -129,9 +116,7 @@ impl fmt::Display for FormatError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             &FormatError::CanceledByUser => write!(f, "The operation was canceled by the user"),
-            &FormatError::CommandExecError(ref e) => {
-                write!(f, "Failed to execute command: {}", e.description())
-            }
+            &FormatError::CommandExecError(ref e) => write!(f, "Failed to execute command: {}", e),
             &FormatError::CommandFailed(status) => match status {
                 Some(code) => write!(f, "Command exited with code: {}", code),
                 None => write!(f, "Command terminated by signal"),
@@ -140,9 +125,7 @@ impl fmt::Display for FormatError {
             &FormatError::UnknownFilesystemType(ref s) => {
                 write!(f, "Unknown filesystem type: {}", s)
             }
-            &FormatError::WipefsExecError(ref e) => {
-                write!(f, "Failed to execute wipefs: {}", e.description())
-            }
+            &FormatError::WipefsExecError(ref e) => write!(f, "Failed to execute wipefs: {}", e),
             &FormatError::WipefsFailed(status) => match status {
                 Some(code) => write!(f, "Wipefs exited with code: {}", code),
                 None => write!(f, "Wipefs terminated by signal"),
@@ -158,22 +141,20 @@ impl fmt::Display for PartitioningError {
                 write!(f, "The operation was canceled by the user")
             }
             &PartitioningError::CommitError(ref e) => {
-                write!(f, "Failed to commit changes to disk: {}", e.description())
+                write!(f, "Failed to commit changes to disk: {}", e)
             }
             &PartitioningError::ConstraintError => write!(f, "Failed to get the constraint"),
             &PartitioningError::DeviceOpenError(ref e) => {
-                write!(f, "Failed open the target device: {}", e.description())
+                write!(f, "Failed open the target device: {}", e)
             }
             &PartitioningError::DiskOpenError(ref e) => {
-                write!(f, "Failed open the partition table: {}", e.description())
+                write!(f, "Failed open the partition table: {}", e)
             }
-            &PartitioningError::PartitionAddError(ref e) => write!(
-                f,
-                "Failed to add partition to partition table: {}",
-                e.description()
-            ),
+            &PartitioningError::PartitionAddError(ref e) => {
+                write!(f, "Failed to add partition to partition table: {}", e)
+            }
             &PartitioningError::PartitionCreateError(ref e) => {
-                write!(f, "Failed create partition in memory: {}", e.description())
+                write!(f, "Failed create partition in memory: {}", e)
             }
             &PartitioningError::UnknownTableType(ref s) => {
                 write!(f, "Unknown partition table type: {}", s)
