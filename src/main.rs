@@ -146,14 +146,13 @@ fn main() {
                     .expect("No output file specified"),
             );
 
-            match dd::dd(
+            if let Err(err) = dd::dd(
                 &input,
                 &output,
                 sub_matches.is_present("yes"),
                 sub_matches.is_present("machine-readable"),
             ) {
-                Ok(_) => (),
-                Err(err) => exit_with_error(err),
+                exit_with_error(err);
             }
         }
         ("format", Some(sub_matches)) => {
@@ -163,7 +162,7 @@ fn main() {
                     .expect("No partition specified"),
             );
 
-            match formatting::format(
+            if let Err(err) = formatting::format(
                 &partition,
                 sub_matches
                     .value_of("filesystem")
@@ -173,14 +172,14 @@ fn main() {
                 sub_matches.value_of("label"),
                 sub_matches.is_present("yes"),
             ) {
-                Ok(_) => (),
-                Err(err) => exit_with_error(err),
+                exit_with_error(err);
             }
         }
         ("create-table", Some(sub_matches)) => {
             let device: PathBuf =
                 PathBuf::from(sub_matches.value_of("device").expect("No device specified"));
-            match partitioning::create_table(
+
+            if let Err(err) = partitioning::create_table(
                 &device,
                 sub_matches
                     .value_of("type")
@@ -189,8 +188,7 @@ fn main() {
                 sub_matches.is_present("partition"),
                 None,
             ) {
-                Ok(_) => (),
-                Err(err) => exit_with_error(err),
+                exit_with_error(err);
             }
         }
         _ => (),
