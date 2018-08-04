@@ -128,9 +128,8 @@ pub fn dd(input: &Path, output: &Path, assume_yes: bool, disable_ui: bool) -> Re
         spinner.enable_steady_tick(100);
     }
 
-    match output_file.sync_all() {
-        Ok(_) => (),
-        Err(err) => return Err(DdError::SyncError(err)),
+    if let Err(err) = output_file.sync_all() {
+        return Err(DdError::SyncError(err));
     }
 
     spinner.finish();

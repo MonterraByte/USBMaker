@@ -37,18 +37,14 @@ pub fn prompt(message: &str, default: bool) -> bool {
                 prompt_style.paint("[y/N]")
             ),
         }
-        match io::stdout().flush() {
-            Ok(_) => (),
-            Err(err) => eprintln!("Error writing to stdout: {}", err.description()),
-        };
+        if let Err(err) = io::stdout().flush() {
+            eprintln!("Error writing to stdout: {}", err.description());
+        }
 
-        match io::stdin().read_line(&mut input) {
-            Ok(_) => (),
-            Err(err) => {
-                eprintln!("Error reading input: {}", err.description());
-                input.clear();
-                continue;
-            }
+        if let Err(err) = io::stdin().read_line(&mut input) {
+            eprintln!("Error reading input: {}", err.description());
+            input.clear();
+            continue;
         }
 
         match input.to_lowercase().trim() {

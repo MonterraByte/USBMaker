@@ -93,14 +93,12 @@ pub fn create_table(
             None => return Err(PartitioningError::ConstraintError),
         };
 
-        match disk.add_partition(&mut partition, &constraint) {
-            Ok(_) => (),
-            Err(err) => return Err(PartitioningError::PartitionAddError(err)),
-        };
+        if let Err(err) = disk.add_partition(&mut partition, &constraint) {
+            return Err(PartitioningError::PartitionAddError(err));
+        }
 
-        match partition.get_path() {
-            Some(path) => return_path = path.to_path_buf(),
-            None => (),
+        if let Some(path) = partition.get_path() {
+            return_path = path.to_path_buf();
         }
     }
 
