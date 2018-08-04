@@ -42,6 +42,12 @@ pub enum FormatError {
     WipefsFailed(Option<i32>),
 }
 
+pub enum MountError {
+    CommandExecError(io::Error),
+    CommandFailed(Option<i32>),
+    TempdirCreationError(io::Error),
+}
+
 pub enum PartitioningError {
     CanceledByUser,
     CommitError(io::Error),
@@ -77,6 +83,16 @@ impl USBMakerError for FormatError {
             &FormatError::UnknownFilesystemType(_) => 17,
             &FormatError::WipefsExecError(_) => 18,
             &FormatError::WipefsFailed(_) => 19,
+        }
+    }
+}
+
+impl USBMakerError for MountError {
+    fn error_code(&self) -> i32 {
+        match self {
+            &MountError::CommandExecError(_) => 1,
+            &MountError::CommandFailed(_) => 1,
+            &MountError::TempdirCreationError(_) => 17,
         }
     }
 }
@@ -130,6 +146,21 @@ impl fmt::Display for FormatError {
                 Some(code) => write!(f, "Wipefs exited with code: {}", code),
                 None => write!(f, "Wipefs terminated by signal"),
             },
+        }
+    }
+}
+
+impl fmt::Display for MountError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            &MountError::CommandExecError(ref e) => write!(f, "Failed to execute command: {}", e),
+            &MountError::CommandFailed(status) => match status {
+                Some(code) => write!(f, "Mount command exited with code: {}", code),
+                None => write!(f, "Mount command terminated by signal"),
+            },
+            &MountError::TempdirCreationError(ref e) => {
+                write!(f, "Failed to create temporary directory: {}", e)
+            }
         }
     }
 }

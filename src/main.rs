@@ -20,10 +20,12 @@ extern crate ansi_term;
 extern crate clap;
 extern crate indicatif;
 extern crate libparted;
+extern crate tempfile;
 
 mod dd;
 mod error;
 mod formatting;
+mod mount;
 mod partitioning;
 mod tui;
 
