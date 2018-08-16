@@ -22,6 +22,7 @@ extern crate indicatif;
 extern crate libparted;
 extern crate tempfile;
 
+mod copy;
 mod dd;
 mod error;
 mod formatting;
