@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>363</width>
-    <height>482</height>
+    <height>454</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -85,19 +85,6 @@
      <widget class="QComboBox" name="comboBox_filesystem"/>
     </item>
     <item>
-     <widget class="QLabel" name="label_clustersize">
-      <property name="text">
-       <string>Cluster size</string>
-      </property>
-      <property name="textFormat">
-       <enum>Qt::PlainText</enum>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QComboBox" name="comboBox_clustersize"/>
-    </item>
-    <item>
      <widget class="QLabel" name="label_label">
       <property name="text">
        <string>New volume label</string>
@@ -130,29 +117,16 @@
         </widget>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_2">
-         <item>
-          <widget class="QCheckBox" name="checkBox_checkbadblocks">
-           <property name="font">
-            <font>
-             <pointsize>9</pointsize>
-            </font>
-           </property>
-           <property name="text">
-            <string>Check device for bad blocks</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QComboBox" name="comboBox_checkbadblocks">
-           <property name="font">
-            <font>
-             <pointsize>9</pointsize>
-            </font>
-           </property>
-          </widget>
-         </item>
-        </layout>
+        <widget class="QCheckBox" name="checkBox_checkbadblocks">
+         <property name="font">
+          <font>
+           <pointsize>9</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>Check device for bad blocks</string>
+         </property>
+        </widget>
        </item>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_3">

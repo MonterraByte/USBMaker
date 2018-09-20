@@ -45,9 +45,7 @@ def get_id_list():
 
 
 def get_block_device_name(device_id):
-    # os.readlink returns a relative path (for example: ../../sda), so
-    # we just need to remove the ../../ part.
-    return os.readlink('/dev/disk/by-id/' + device_id)[6:]
+    return os.path.basename(os.readlink('/dev/disk/by-id/' + device_id))
 
 
 def get_size(device):

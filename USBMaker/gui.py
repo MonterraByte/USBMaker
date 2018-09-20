@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'gui.ui'
 #
-# Created by: PyQt5 UI code generator 5.9
+# Created by: PyQt5 UI code generator 5.11.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(363, 482)
+        MainWindow.resize(363, 454)
         MainWindow.setMinimumSize(QtCore.QSize(363, 0))
         self.centralWidget = QtWidgets.QWidget(MainWindow)
         self.centralWidget.setObjectName("centralWidget")
@@ -50,13 +50,6 @@ class Ui_MainWindow(object):
         self.comboBox_filesystem = QtWidgets.QComboBox(self.centralWidget)
         self.comboBox_filesystem.setObjectName("comboBox_filesystem")
         self.verticalLayout.addWidget(self.comboBox_filesystem)
-        self.label_clustersize = QtWidgets.QLabel(self.centralWidget)
-        self.label_clustersize.setTextFormat(QtCore.Qt.PlainText)
-        self.label_clustersize.setObjectName("label_clustersize")
-        self.verticalLayout.addWidget(self.label_clustersize)
-        self.comboBox_clustersize = QtWidgets.QComboBox(self.centralWidget)
-        self.comboBox_clustersize.setObjectName("comboBox_clustersize")
-        self.verticalLayout.addWidget(self.comboBox_clustersize)
         self.label_label = QtWidgets.QLabel(self.centralWidget)
         self.label_label.setTextFormat(QtCore.Qt.PlainText)
         self.label_label.setObjectName("label_label")
@@ -74,21 +67,12 @@ class Ui_MainWindow(object):
         self.label_formatoptions.setTextFormat(QtCore.Qt.PlainText)
         self.label_formatoptions.setObjectName("label_formatoptions")
         self.verticalLayout_3.addWidget(self.label_formatoptions)
-        self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_2.setObjectName("horizontalLayout_2")
         self.checkBox_checkbadblocks = QtWidgets.QCheckBox(self.frame)
         font = QtGui.QFont()
         font.setPointSize(9)
         self.checkBox_checkbadblocks.setFont(font)
         self.checkBox_checkbadblocks.setObjectName("checkBox_checkbadblocks")
-        self.horizontalLayout_2.addWidget(self.checkBox_checkbadblocks)
-        self.comboBox_checkbadblocks = QtWidgets.QComboBox(self.frame)
-        font = QtGui.QFont()
-        font.setPointSize(9)
-        self.comboBox_checkbadblocks.setFont(font)
-        self.comboBox_checkbadblocks.setObjectName("comboBox_checkbadblocks")
-        self.horizontalLayout_2.addWidget(self.comboBox_checkbadblocks)
-        self.verticalLayout_3.addLayout(self.horizontalLayout_2)
+        self.verticalLayout_3.addWidget(self.checkBox_checkbadblocks)
         self.horizontalLayout_3 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_3.setObjectName("horizontalLayout_3")
         self.checkBox_bootmethod = QtWidgets.QCheckBox(self.frame)
@@ -167,7 +151,6 @@ class Ui_MainWindow(object):
         self.pushButton_refresh.setText(_translate("MainWindow", "⟳"))
         self.label_partscheme.setText(_translate("MainWindow", "Partition scheme and target system type"))
         self.label_filesystem.setText(_translate("MainWindow", "File system"))
-        self.label_clustersize.setText(_translate("MainWindow", "Cluster size"))
         self.label_label.setText(_translate("MainWindow", "New volume label"))
         self.label_formatoptions.setText(_translate("MainWindow", "Format Options"))
         self.checkBox_checkbadblocks.setText(_translate("MainWindow", "Check device for bad blocks"))
