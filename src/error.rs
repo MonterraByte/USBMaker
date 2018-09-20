@@ -46,6 +46,15 @@ pub enum FormatError {
 }
 
 #[derive(Debug)]
+pub enum IsoError {
+    CanceledByUser,
+    CopyError(io::Error),
+    FormatError(FormatError),
+    MountError(MountError),
+    PartitioningError(PartitioningError),
+}
+
+#[derive(Debug)]
 pub enum MountError {
     CommandExecError(io::Error),
     CommandFailed(Option<i32>),
@@ -88,6 +97,19 @@ impl USBMakerError for FormatError {
             FormatError::UnknownFilesystemType(_) => 17,
             FormatError::WipefsExecError(_) => 18,
             FormatError::WipefsFailed(_) => 19,
+        }
+    }
+}
+
+// TODO: assign error codes
+impl USBMakerError for IsoError {
+    fn error_code(&self) -> i32 {
+        match self {
+            IsoError::CanceledByUser => 1,
+            IsoError::CopyError(_) => 1,
+            IsoError::FormatError(ref err) => err.error_code(),
+            IsoError::PartitioningError(ref err) => err.error_code(),
+            IsoError::MountError(ref err) => err.error_code(),
         }
     }
 }
@@ -155,6 +177,18 @@ impl fmt::Display for FormatError {
     }
 }
 
+impl fmt::Display for IsoError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            IsoError::CanceledByUser => write!(f, "The operation was canceled by the user"),
+            IsoError::CopyError(ref e) => write!(f, "Failed to copy files: {}", e),
+            IsoError::FormatError(ref e) => e.fmt(f),
+            IsoError::MountError(ref e) => e.fmt(f),
+            IsoError::PartitioningError(ref e) => e.fmt(f),
+        }
+    }
+}
+
 impl fmt::Display for MountError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -201,5 +235,6 @@ impl fmt::Display for PartitioningError {
 
 impl Error for DdError {}
 impl Error for FormatError {}
+impl Error for IsoError {}
 impl Error for MountError {}
 impl Error for PartitioningError {}
