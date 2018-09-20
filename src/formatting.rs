@@ -38,9 +38,8 @@ pub fn format(
             "This will wipe all data on {}.",
             path.to_string_lossy()
         ));
-        match tui::prompt(&*format!("Do you want to continue?"), false) {
-            true => (),
-            false => return Err(FormatError::CanceledByUser),
+        if !tui::prompt("Do you want to continue?", false) {
+            return Err(FormatError::CanceledByUser);
         }
     }
 
@@ -143,12 +142,11 @@ fn create_filesystem(
     };
 
     match command.status() {
-        Ok(status) => match status.success() {
-            true => {
+        Ok(status) => if status.success() {
                 spinner.finish_with_message("Filesystem created successfully");
                 Ok(())
-            }
-            false => Err(FormatError::CommandFailed(status.code())),
+        } else {
+            Err(FormatError::CommandFailed(status.code()))
         },
         Err(err) => Err(FormatError::CommandExecError(err)),
     }

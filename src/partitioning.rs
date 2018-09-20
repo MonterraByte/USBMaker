@@ -44,9 +44,8 @@ pub fn create_table(
             "This will wipe all data on {}.",
             device_path.to_string_lossy()
         ));
-        match tui::prompt(&*format!("Do you want to continue?"), false) {
-            true => (),
-            false => return Err(PartitioningError::CanceledByUser),
+        if !tui::prompt("Do you want to continue?", false) {
+            return Err(PartitioningError::CanceledByUser);
         }
     }
 

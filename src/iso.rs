@@ -39,9 +39,8 @@ pub fn create_bootable(
             "This will wipe all data on {}.",
             device.to_string_lossy()
         ));
-        match tui::prompt("Do you want to continue?", false) {
-            true => (),
-            false => return Err(IsoError::CanceledByUser),
+        if !tui::prompt("Do you want to continue?", false) {
+            return Err(IsoError::CanceledByUser);
         }
     }
 
