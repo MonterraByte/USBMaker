@@ -29,10 +29,10 @@ pub struct Mount {
 
 impl Mount {
     pub fn new(source: &Path) -> Result<Mount, MountError> {
-        let mountpoint: TempDir = match Builder::new().prefix("usbmaker").tempdir() {
-            Ok(dir) => dir,
-            Err(err) => return Err(MountError::TempdirCreationError(err)),
-        };
+        let mountpoint: TempDir = Builder::new()
+            .prefix("usbmaker")
+            .tempdir()
+            .map_err(MountError::TempdirCreationError)?;
 
         match Command::new("mount")
             .arg("-r")

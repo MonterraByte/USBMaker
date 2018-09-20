@@ -28,15 +28,12 @@ use error::DdError;
 use tui;
 
 pub fn dd(input: &Path, output: &Path, assume_yes: bool, disable_ui: bool) -> Result<(), DdError> {
-    let mut input_file: File = match File::open(&input) {
-        Ok(file) => file,
-        Err(err) => return Err(DdError::InputFileOpenError(err)),
-    };
+    let mut input_file: File = File::open(&input).map_err(DdError::InputFileOpenError)?;
 
-    let file_size: u64 = match input_file.metadata() {
-        Ok(metadata) => metadata.len(),
-        Err(err) => return Err(DdError::InputFileMetadataError(err)),
-    };
+    let file_size: u64 = input_file
+        .metadata()
+        .map_err(DdError::InputFileMetadataError)?
+        .len();
 
     if !assume_yes && output.is_file() && !tui::prompt(
         &*format!("Do you want to overwrite {}?", output.to_string_lossy()),
@@ -107,10 +104,9 @@ pub fn dd(input: &Path, output: &Path, assume_yes: bool, disable_ui: bool) -> Re
             Err(ref err) if err.kind() == io::ErrorKind::Interrupted => continue,
             Err(err) => return Err(DdError::ReadError(err)),
         };
-        match output_file.write_all(&buf[..len]) {
-            Ok(_) => (),
-            Err(err) => return Err(DdError::WriteError(err)),
-        };
+        output_file
+            .write_all(&buf[..len])
+            .map_err(DdError::WriteError)?;
         tx.send(len).ok();
     }
 
@@ -128,9 +124,7 @@ pub fn dd(input: &Path, output: &Path, assume_yes: bool, disable_ui: bool) -> Re
         spinner.enable_steady_tick(100);
     }
 
-    if let Err(err) = output_file.sync_all() {
-        return Err(DdError::SyncError(err));
-    }
+    output_file.sync_all().map_err(DdError::SyncError)?;
 
     spinner.finish();
 

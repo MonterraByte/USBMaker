@@ -30,14 +30,8 @@ pub fn create_table(
     partition: bool,
     fs_type: Option<FileSystemType>,
 ) -> Result<PathBuf, PartitioningError> {
-    let table_type: DiskType = match DiskType::get(table_type_str) {
-        Some(table_type) => table_type,
-        None => {
-            return Err(PartitioningError::UnknownTableType(
-                table_type_str.to_owned(),
-            ))
-        }
-    };
+    let table_type: DiskType = DiskType::get(table_type_str)
+        .ok_or_else(|| PartitioningError::UnknownTableType(table_type_str.to_owned()))?;
 
     if !assume_yes {
         tui::warn(&*format!(
@@ -56,19 +50,14 @@ pub fn create_table(
     spinner.set_message("Creating partition table...");
     spinner.enable_steady_tick(100);
 
-    let mut device: Device = match Device::get(device_path) {
-        Ok(device) => device,
-        Err(err) => return Err(PartitioningError::DeviceOpenError(err)),
-    };
+    let mut device: Device =
+        Device::get(device_path).map_err(PartitioningError::DeviceOpenError)?;
 
     let length: i64 = device.length() as i64;
     let sector_size: i64 = device.sector_size() as i64;
 
-    let mut disk: Disk = match Disk::new_fresh(&mut device, table_type) {
-        Ok(disk) => disk,
-        Err(err) => return Err(PartitioningError::DiskOpenError(err)),
-    };
-
+    let mut disk: Disk =
+        Disk::new_fresh(&mut device, table_type).map_err(PartitioningError::DiskOpenError)?;
     if partition {
         let mebibyte: i64 = 1048576 / sector_size;
 
@@ -76,25 +65,20 @@ pub fn create_table(
             "gpt" => length - mebibyte - 1,
             _ => length - 1,
         };
-        let mut partition: Partition = match Partition::new(
+        let mut partition: Partition = Partition::new(
             &disk,
             PartitionType::PED_PARTITION_NORMAL,
             fs_type.as_ref(),
             mebibyte,
             end,
-        ) {
-            Ok(partition) => partition,
-            Err(err) => return Err(PartitioningError::PartitionCreateError(err)),
-        };
+        ).map_err(PartitioningError::PartitionCreateError)?;
 
-        let constraint: Constraint = match disk.constraint_any() {
-            Some(constraint) => constraint,
-            None => return Err(PartitioningError::ConstraintError),
-        };
+        let constraint: Constraint = disk
+            .constraint_any()
+            .ok_or(PartitioningError::ConstraintError)?;
 
-        if let Err(err) = disk.add_partition(&mut partition, &constraint) {
-            return Err(PartitioningError::PartitionAddError(err));
-        }
+        disk.add_partition(&mut partition, &constraint)
+            .map_err(PartitioningError::PartitionAddError)?;
 
         if let Some(path) = partition.get_path() {
             return_path = path.to_path_buf();

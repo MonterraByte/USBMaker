@@ -50,10 +50,8 @@ pub fn format(
             _ => FileSystemType::get(fs),
         };
 
-        match partitioning::create_table(path, is_device.unwrap(), true, true, fs_type) {
-            Ok(path) => path,
-            Err(err) => return Err(FormatError::PartitioningError(err)),
-        }
+        partitioning::create_table(path, is_device.unwrap(), true, true, fs_type)
+            .map_err(FormatError::PartitioningError)?
     } else {
         path.to_path_buf()
     };
@@ -143,8 +141,8 @@ fn create_filesystem(
 
     match command.status() {
         Ok(status) => if status.success() {
-                spinner.finish_with_message("Filesystem created successfully");
-                Ok(())
+            spinner.finish_with_message("Filesystem created successfully");
+            Ok(())
         } else {
             Err(FormatError::CommandFailed(status.code()))
         },
