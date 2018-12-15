@@ -7,7 +7,7 @@ edition = "2018"
 [dependencies]
 ansi_term = "0.11"
 clap = "2"
-indicatif = "0.9"
+indicatif = "0.10"
 libparted = "0.1"
 tempfile = "3"
 
