@@ -21,7 +21,7 @@ use std::process::Command;
 
 use tempfile::{Builder, TempDir};
 
-use error::MountError;
+use crate::error::MountError;
 
 pub struct Mount {
     mountpoint: PathBuf,

@@ -17,12 +17,12 @@
 
 use std::path::{Path, PathBuf};
 
-use copy;
-use error::IsoError;
-use formatting;
-use mount::Mount;
-use partitioning;
-use tui;
+use crate::copy;
+use crate::error::IsoError;
+use crate::formatting;
+use crate::mount::Mount;
+use crate::partitioning;
+use crate::tui;
 
 // TODO: bootloader install
 pub fn create_bootable(

@@ -21,9 +21,9 @@ use std::process::Command;
 use indicatif::{ProgressBar, ProgressDrawTarget};
 use libparted::FileSystemType;
 
-use error::FormatError;
-use partitioning;
-use tui;
+use crate::error::FormatError;
+use crate::partitioning;
+use crate::tui;
 
 pub fn format(
     path: &Path,

@@ -24,8 +24,8 @@ use std::time;
 
 use indicatif::{ProgressBar, ProgressDrawTarget, ProgressStyle};
 
-use error::DdError;
-use tui;
+use crate::error::DdError;
+use crate::tui;
 
 pub fn dd(input: &Path, output: &Path, assume_yes: bool, disable_ui: bool) -> Result<(), DdError> {
     let mut input_file: File = File::open(&input).map_err(DdError::InputFileOpenError)?;

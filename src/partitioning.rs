@@ -20,8 +20,8 @@ use std::path::{Path, PathBuf};
 use indicatif::{ProgressBar, ProgressDrawTarget};
 use libparted::{Constraint, Device, Disk, DiskType, FileSystemType, Partition, PartitionType};
 
-use error::PartitioningError;
-use tui;
+use crate::error::PartitioningError;
+use crate::tui;
 
 pub fn create_table(
     device_path: &Path,
