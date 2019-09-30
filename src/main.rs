@@ -15,11 +15,6 @@
 //   You should have received a copy of the GNU General Public License
 //   along with USBMaker.  If not, see <https://www.gnu.org/licenses/>.
 
-extern crate ansi_term;
-extern crate indicatif;
-extern crate libparted;
-extern crate tempfile;
-
 mod copy;
 mod error;
 mod formatting;
