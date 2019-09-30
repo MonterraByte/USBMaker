@@ -1,14 +1,16 @@
 [package]
 name = "usbmaker"
+description = "Create bootable usb drives"
 version = "2.0.0"
 authors = ["Joaquim Monteiro <joaquim.monteiro@protonmail.com>"]
 edition = "2018"
 
 [dependencies]
 ansi_term = "0.12"
-clap = "2"
 indicatif = "0.12"
 libparted = "0.1"
+paw = "1"
+structopt = { version = "0.3", features = ["paw"] }
 tempfile = "3"
 
 [profile.release]
