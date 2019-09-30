@@ -24,17 +24,6 @@ pub trait USBMakerError: Error {
 }
 
 #[derive(Debug)]
-pub enum DdError {
-    CanceledByUser,
-    InputFileMetadataError(io::Error),
-    InputFileOpenError(io::Error),
-    OutputFileOpenError(io::Error),
-    ReadError(io::Error),
-    SyncError(io::Error),
-    WriteError(io::Error),
-}
-
-#[derive(Debug)]
 pub enum FormatError {
     CanceledByUser,
     CommandExecError(io::Error),
@@ -71,20 +60,6 @@ pub enum PartitioningError {
     PartitionAddError(io::Error),
     PartitionCreateError(io::Error),
     UnknownTableType(String),
-}
-
-impl USBMakerError for DdError {
-    fn error_code(&self) -> i32 {
-        match self {
-            DdError::CanceledByUser => 1,
-            DdError::InputFileMetadataError(_) => 2,
-            DdError::InputFileOpenError(_) => 3,
-            DdError::OutputFileOpenError(_) => 4,
-            DdError::ReadError(_) => 5,
-            DdError::SyncError(_) => 6,
-            DdError::WriteError(_) => 7,
-        }
-    }
 }
 
 impl USBMakerError for FormatError {
@@ -135,22 +110,6 @@ impl USBMakerError for PartitioningError {
             PartitioningError::PartitionAddError(_) => 12,
             PartitioningError::PartitionCreateError(_) => 13,
             PartitioningError::UnknownTableType(_) => 14,
-        }
-    }
-}
-
-impl fmt::Display for DdError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            DdError::CanceledByUser => write!(f, "The operation was canceled by the user"),
-            DdError::InputFileMetadataError(ref e) => {
-                write!(f, "Failed to get the input file's metadata: {}", e)
-            }
-            DdError::InputFileOpenError(ref e) => write!(f, "Failed open the input file: {}", e),
-            DdError::OutputFileOpenError(ref e) => write!(f, "Failed open the output file: {}", e),
-            DdError::ReadError(ref e) => write!(f, "Failed to read from the input file: {}", e),
-            DdError::SyncError(ref e) => write!(f, "Failed to sync changes to disk: {}", e),
-            DdError::WriteError(ref e) => write!(f, "Failed to write to the output file: {}", e),
         }
     }
 }
@@ -233,7 +192,6 @@ impl fmt::Display for PartitioningError {
     }
 }
 
-impl Error for DdError {}
 impl Error for FormatError {}
 impl Error for IsoError {}
 impl Error for MountError {}

@@ -23,7 +23,6 @@ extern crate libparted;
 extern crate tempfile;
 
 mod copy;
-mod dd;
 mod error;
 mod formatting;
 mod iso;
@@ -43,32 +42,6 @@ fn main() {
         .version(crate_version!())
         .about("Create bootable usb drives")
         .subcommands(vec![
-            SubCommand::with_name("dd")
-                .author(crate_authors!())
-                .version(crate_version!())
-                .about("Copy the contents of a file/device to another file/device")
-                .args(&[
-                    Arg::with_name("input")
-                        .takes_value(true)
-                        .required(true)
-                        .index(1)
-                        .help("Device or file from which data is copied"),
-                    Arg::with_name("output")
-                        .takes_value(true)
-                        .required(true)
-                        .index(2)
-                        .help("Device or file to which data is copied"),
-                    Arg::with_name("yes")
-                        .short("y")
-                        .long("yes")
-                        .takes_value(false)
-                        .help("Confirm prompts automatically"),
-                    Arg::with_name("machine-readable")
-                        .short("M")
-                        .long("machine-readable")
-                        .takes_value(false)
-                        .help("Print how many bytes have been written in total each iteration (very verbose)")
-                ]),
             SubCommand::with_name("format")
                 .author(crate_authors!())
                 .version(crate_version!())
@@ -182,27 +155,6 @@ fn main() {
         .get_matches();
 
     match matches.subcommand() {
-        ("dd", Some(sub_matches)) => {
-            let input: PathBuf = PathBuf::from(
-                sub_matches
-                    .value_of("input")
-                    .expect("No input file specified"),
-            );
-            let output: PathBuf = PathBuf::from(
-                sub_matches
-                    .value_of("output")
-                    .expect("No output file specified"),
-            );
-
-            if let Err(err) = dd::dd(
-                &input,
-                &output,
-                sub_matches.is_present("yes"),
-                sub_matches.is_present("machine-readable"),
-            ) {
-                exit_with_error(err);
-            }
-        }
         ("format", Some(sub_matches)) => {
             let partition: PathBuf = PathBuf::from(
                 sub_matches
