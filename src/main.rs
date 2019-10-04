@@ -29,8 +29,6 @@ use std::process;
 use ansi_term::Colour;
 use structopt::StructOpt;
 
-use error::USBMakerError;
-
 #[derive(StructOpt, Debug)]
 #[structopt(about, author)]
 struct Args {

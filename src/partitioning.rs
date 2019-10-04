@@ -15,12 +15,13 @@
 //   You should have received a copy of the GNU General Public License
 //   along with USBMaker.  If not, see <https://www.gnu.org/licenses/>.
 
+use std::io;
 use std::path::{Path, PathBuf};
 
 use indicatif::{ProgressBar, ProgressDrawTarget};
 use libparted::{Constraint, Device, Disk, DiskType, FileSystemType, Partition, PartitionType};
 
-use crate::error::PartitioningError;
+use crate::error::USBMakerError;
 use crate::tui;
 
 pub fn create_table(
@@ -29,9 +30,8 @@ pub fn create_table(
     assume_yes: bool,
     partition: bool,
     fs_type: Option<FileSystemType>,
-) -> Result<PathBuf, PartitioningError> {
-    let table_type: DiskType = DiskType::get(table_type_str)
-        .ok_or_else(|| PartitioningError::UnknownTableType(table_type_str.to_owned()))?;
+) -> Result<PathBuf, USBMakerError> {
+    let table_type: DiskType = DiskType::get(table_type_str).expect("Unknown partition table");
 
     if !assume_yes {
         tui::warn(&*format!(
@@ -39,7 +39,7 @@ pub fn create_table(
             device_path.to_string_lossy()
         ));
         if !tui::prompt("Do you want to continue?", false) {
-            return Err(PartitioningError::CanceledByUser);
+            return Err(USBMakerError::CanceledByUser);
         }
     }
 
@@ -50,14 +50,14 @@ pub fn create_table(
     spinner.set_message("Creating partition table...");
     spinner.enable_steady_tick(100);
 
-    let mut device: Device =
-        Device::get(device_path).map_err(PartitioningError::DeviceOpenError)?;
+    let mut device: Device = Device::get(device_path)
+        .map_err(|e| USBMakerError::IoError(e, String::from("opening device for partitioning")))?;
 
     let length: i64 = device.length() as i64;
     let sector_size: i64 = device.sector_size() as i64;
 
-    let mut disk: Disk =
-        Disk::new_fresh(&mut device, table_type).map_err(PartitioningError::DiskOpenError)?;
+    let mut disk: Disk = Disk::new_fresh(&mut device, table_type)
+        .map_err(|e| USBMakerError::IoError(e, String::from("opening disk for partitioning")))?;
     if partition {
         let mebibyte: i64 = 1048576 / sector_size;
 
@@ -71,14 +71,18 @@ pub fn create_table(
             fs_type.as_ref(),
             mebibyte,
             end,
-        ).map_err(PartitioningError::PartitionCreateError)?;
+        )
+        .map_err(|e| USBMakerError::PartitioningError(e, String::from("creating partition")))?;
 
-        let constraint: Constraint = disk
-            .constraint_any()
-            .ok_or(PartitioningError::ConstraintError)?;
+        let constraint: Constraint = disk.constraint_any().ok_or_else(|| {
+            USBMakerError::PartitioningError(
+                io::Error::new(io::ErrorKind::Other, ""),
+                String::from("generating constraint"),
+            )
+        })?;
 
         disk.add_partition(&mut partition, &constraint)
-            .map_err(PartitioningError::PartitionAddError)?;
+            .map_err(|e| USBMakerError::PartitioningError(e, String::from("adding partition")))?;
 
         if let Some(path) = partition.get_path() {
             return_path = path.to_path_buf();
@@ -90,6 +94,9 @@ pub fn create_table(
             spinner.finish_with_message("Creating partition table... Done");
             Ok(return_path)
         }
-        Err(err) => Err(PartitioningError::CommitError(err)),
+        Err(err) => Err(USBMakerError::IoError(
+            err,
+            String::from("commiting partition table to disk"),
+        )),
     }
 }

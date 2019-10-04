@@ -21,18 +21,17 @@ use std::process::Command;
 
 use tempfile::{Builder, TempDir};
 
-use crate::error::MountError;
+use crate::error::USBMakerError;
 
 pub struct Mount {
     mountpoint: PathBuf,
 }
 
 impl Mount {
-    pub fn new(source: &Path) -> Result<Mount, MountError> {
-        let mountpoint: TempDir = Builder::new()
-            .prefix("usbmaker")
-            .tempdir()
-            .map_err(MountError::TempdirCreationError)?;
+    pub fn new(source: &Path) -> Result<Mount, USBMakerError> {
+        let mountpoint: TempDir = Builder::new().prefix("usbmaker").tempdir().map_err(|e| {
+            USBMakerError::IoError(e, String::from("creating temporary mount directory"))
+        })?;
 
         match Command::new("mount")
             .arg("-r")
@@ -40,10 +39,28 @@ impl Mount {
             .arg(mountpoint.path())
             .status()
         {
-            Ok(status) => if !status.success() {
-                return Err(MountError::CommandFailed(status.code()));
-            },
-            Err(err) => return Err(MountError::CommandExecError(err)),
+            Ok(status) => {
+                if !status.success() {
+                    return Err(USBMakerError::CommandFailed(
+                        status.code(),
+                        format!(
+                            "mount -r {} {}",
+                            source.display(),
+                            mountpoint.path().display()
+                        ),
+                    ));
+                }
+            }
+            Err(err) => {
+                return Err(USBMakerError::CommandLaunchFailed(
+                    err,
+                    format!(
+                        "mount -r {} {}",
+                        source.display(),
+                        mountpoint.path().display()
+                    ),
+                ))
+            }
         };
 
         // If everything succeeded, comsume the TempDir as we want to remove it manually.

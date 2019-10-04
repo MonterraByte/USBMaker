@@ -18,7 +18,7 @@
 use std::path::{Path, PathBuf};
 
 use crate::copy;
-use crate::error::IsoError;
+use crate::error::USBMakerError;
 use crate::formatting;
 use crate::mount::Mount;
 use crate::partitioning;
@@ -33,25 +33,24 @@ pub fn create_bootable(
     label: Option<&str>,
     badblocks: bool,
     assume_yes: bool,
-) -> Result<(), IsoError> {
+) -> Result<(), USBMakerError> {
     if !assume_yes {
         tui::warn(&*format!(
             "This will wipe all data on {}.",
             device.to_string_lossy()
         ));
         if !tui::prompt("Do you want to continue?", false) {
-            return Err(IsoError::CanceledByUser);
+            return Err(USBMakerError::CanceledByUser);
         }
     }
 
-    let partition_path: PathBuf = partitioning::create_table(device, table, true, true, None)
-        .map_err(IsoError::PartitioningError)?;
+    let partition_path: PathBuf = partitioning::create_table(device, table, true, true, None)?;
 
-    formatting::format(&partition_path, fs, badblocks, None, label, true)
-        .map_err(IsoError::FormatError)?;
+    formatting::format(&partition_path, fs, badblocks, None, label, true)?;
 
-    let iso_mount: Mount = Mount::new(iso).map_err(IsoError::MountError)?;
-    let device_mount: Mount = Mount::new(device).map_err(IsoError::MountError)?;
+    let iso_mount: Mount = Mount::new(iso)?;
+    let device_mount: Mount = Mount::new(device)?;
 
-    copy::copy_dir_contents(iso_mount.path(), device_mount.path()).map_err(IsoError::CopyError)
+    copy::copy_dir_contents(iso_mount.path(), device_mount.path())
+        .map_err(|e| USBMakerError::IoError(e, String::from("copying files")))
 }

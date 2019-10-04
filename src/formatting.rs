@@ -21,7 +21,7 @@ use std::process::Command;
 use indicatif::{ProgressBar, ProgressDrawTarget};
 use libparted::FileSystemType;
 
-use crate::error::FormatError;
+use crate::error::USBMakerError;
 use crate::partitioning;
 use crate::tui;
 
@@ -32,14 +32,14 @@ pub fn format(
     is_device: Option<&str>,
     label: Option<&str>,
     assume_yes: bool,
-) -> Result<(), FormatError> {
+) -> Result<(), USBMakerError> {
     if !assume_yes {
         tui::warn(&*format!(
             "This will wipe all data on {}.",
             path.to_string_lossy()
         ));
         if !tui::prompt("Do you want to continue?", false) {
-            return Err(FormatError::CanceledByUser);
+            return Err(USBMakerError::CanceledByUser);
         }
     }
 
@@ -50,8 +50,7 @@ pub fn format(
             _ => FileSystemType::get(fs),
         };
 
-        partitioning::create_table(path, is_device.unwrap(), true, true, fs_type)
-            .map_err(FormatError::PartitioningError)?
+        partitioning::create_table(path, is_device.unwrap(), true, true, fs_type)?
     } else {
         path.to_path_buf()
     };
@@ -76,7 +75,7 @@ fn create_filesystem(
     fs: &str,
     label: Option<&str>,
     badblocks: bool,
-) -> Result<(), FormatError> {
+) -> Result<(), USBMakerError> {
     let spinner: ProgressBar = ProgressBar::new_spinner();
     spinner.set_draw_target(ProgressDrawTarget::stderr());
     spinner.set_message("Creating filesystem...");
@@ -87,10 +86,20 @@ fn create_filesystem(
         .arg(partition.as_os_str())
         .status()
     {
-        Ok(status) => if !status.success() {
-            return Err(FormatError::WipefsFailed(status.code()));
-        },
-        Err(err) => return Err(FormatError::WipefsExecError(err)),
+        Ok(status) => {
+            if !status.success() {
+                return Err(USBMakerError::CommandFailed(
+                    status.code(),
+                    format!("wipefs -af {}", partition.display()),
+                ));
+            }
+        }
+        Err(err) => {
+            return Err(USBMakerError::CommandLaunchFailed(
+                err,
+                format!("wipefs -af {}", partition.display()),
+            ))
+        }
     }
 
     let mut command: Command = match (fs, label, badblocks) {
@@ -136,16 +145,24 @@ fn create_filesystem(
         ("udf", Some(lbl), _) => get_command!("mkfs.udf", "-l", lbl, partition.as_os_str()),
         ("xfs", None, _) => get_command!("mkfs.xfs", partition.as_os_str()),
         ("xfs", Some(lbl), _) => get_command!("mkfs.xfs", "-L", lbl, partition.as_os_str()),
-        _ => return Err(FormatError::UnknownFilesystemType(fs.to_owned())),
+        _ => panic!("Unknown filesystem: {}", fs.to_owned()),
     };
 
     match command.status() {
-        Ok(status) => if status.success() {
-            spinner.finish_with_message("Filesystem created successfully");
-            Ok(())
-        } else {
-            Err(FormatError::CommandFailed(status.code()))
-        },
-        Err(err) => Err(FormatError::CommandExecError(err)),
+        Ok(status) => {
+            if status.success() {
+                spinner.finish_with_message("Filesystem created successfully");
+                Ok(())
+            } else {
+                Err(USBMakerError::CommandFailed(
+                    status.code(),
+                    format!("{:?}", command),
+                ))
+            }
+        }
+        Err(err) => Err(USBMakerError::CommandLaunchFailed(
+            err,
+            format!("{:?}", command),
+        )),
     }
 }
