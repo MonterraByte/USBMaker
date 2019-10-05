@@ -29,6 +29,8 @@ use std::process;
 use ansi_term::Colour;
 use structopt::StructOpt;
 
+use crate::formatting::FileSystem;
+
 #[derive(StructOpt, Debug)]
 #[structopt(about, author)]
 struct Args {
@@ -41,7 +43,7 @@ struct Args {
     badblocks: bool,
     /// Filesystem used to format the device
     #[structopt(short, long, possible_values = &["btrfs", "exfat", "ext2", "ext3", "ext4", "f2fs", "fat32", "ntfs", "udf", "xfs"], default_value = "fat32")]
-    filesystem: String,
+    filesystem: FileSystem,
     /// Partition table used on the device
     #[structopt(short, long, possible_values = &["gpt", "msdos"], default_value = "msdos")]
     table: String,
@@ -79,7 +81,7 @@ fn main(args: Args) {
     if let Err(err) = iso::create_bootable(
         &args.device,
         &args.iso,
-        &args.filesystem,
+        args.filesystem,
         &args.table,
         args.label.as_ref().map(|s| s.as_str()),
         args.badblocks,

@@ -19,7 +19,7 @@ use std::path::{Path, PathBuf};
 
 use crate::copy;
 use crate::error::USBMakerError;
-use crate::formatting;
+use crate::formatting::{self, FileSystem};
 use crate::mount::Mount;
 use crate::partitioning;
 
@@ -27,7 +27,7 @@ use crate::partitioning;
 pub fn create_bootable(
     device: &Path,
     iso: &Path,
-    fs: &str,
+    fs: FileSystem,
     table: &str,
     label: Option<&str>,
     badblocks: bool,

@@ -15,30 +15,130 @@
 //   You should have received a copy of the GNU General Public License
 //   along with USBMaker.  If not, see <https://www.gnu.org/licenses/>.
 
+use std::ffi::OsStr;
+use std::fmt;
 use std::path::Path;
 use std::process::Command;
+use std::str;
 
 use indicatif::{ProgressBar, ProgressDrawTarget};
 
 use crate::error::USBMakerError;
 
-macro_rules! get_command {
-    ( $executable:expr, $( $arg:expr ),* ) => {
-        {
-            let mut command = Command::new($executable);
-            $(
-                command.arg($arg);
-            )*
-            command
-        }
+macro_rules! os {
+    ($s:tt) => {
+        std::ffi::OsStr::new($s)
     };
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum FileSystem {
+    Btrfs,
+    Exfat,
+    Ext2,
+    Ext3,
+    Ext4,
+    F2fs,
+    Fat32,
+    Ntfs,
+    Udf,
+    Xfs,
+}
+
+#[derive(Debug)]
+pub struct FileSystemParseError;
+
+impl fmt::Display for FileSystemParseError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "unknown filesystem")
+    }
+}
+
+impl str::FromStr for FileSystem {
+    type Err = FileSystemParseError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "btrfs" => Ok(FileSystem::Btrfs),
+            "exfat" => Ok(FileSystem::Exfat),
+            "ext2" => Ok(FileSystem::Ext2),
+            "ext3" => Ok(FileSystem::Ext3),
+            "ext4" => Ok(FileSystem::Ext4),
+            "f2fs" => Ok(FileSystem::F2fs),
+            "fat32" => Ok(FileSystem::Fat32),
+            "ntfs" => Ok(FileSystem::Ntfs),
+            "udf" => Ok(FileSystem::Udf),
+            "xfs" => Ok(FileSystem::Xfs),
+            _ => Err(FileSystemParseError),
+        }
+    }
+}
+
+fn get_format_command(
+    fs: FileSystem,
+    partition: &Path,
+    label: Option<&str>,
+    check_badblocks: bool,
+) -> Command {
+    let executable = match fs {
+        FileSystem::Btrfs => os!("mkfs.btrfs"),
+        FileSystem::Exfat => os!("mkfs.exfat"),
+        FileSystem::Ext2 => os!("mkfs.ext2"),
+        FileSystem::Ext3 => os!("mkfs.ext3"),
+        FileSystem::Ext4 => os!("mkfs.ext4"),
+        FileSystem::F2fs => os!("mkfs.f2fs"),
+        FileSystem::Fat32 => os!("mkfs.fat"),
+        FileSystem::Ntfs => os!("mkfs.ntfs"),
+        FileSystem::Udf => os!("mkfs.udf"),
+        FileSystem::Xfs => os!("mkfs.xfs"),
+    };
+
+    let mut args: Vec<&OsStr> = match fs {
+        FileSystem::Fat32 => vec![os!("-F32")],
+        FileSystem::Ntfs => {
+            if !check_badblocks {
+                vec![os!("-Q")]
+            } else {
+                Vec::new()
+            }
+        }
+        _ => Vec::new(),
+    };
+
+    if check_badblocks {
+        match fs {
+            FileSystem::Ext2 | FileSystem::Ext3 | FileSystem::Ext4 | FileSystem::Fat32 => {
+                args.push(os!("-c"))
+            }
+            _ => (),
+        }
+    }
+
+    if let Some(label) = label {
+        args.push(match fs {
+            FileSystem::Btrfs
+            | FileSystem::Ext2
+            | FileSystem::Ext3
+            | FileSystem::Ext4
+            | FileSystem::Ntfs
+            | FileSystem::Xfs => os!("-L"),
+            FileSystem::Exfat | FileSystem::Fat32 => os!("-n"),
+            FileSystem::F2fs | FileSystem::Udf => os!("-l"),
+        });
+        args.push(OsStr::new(label));
+    }
+
+    args.push(partition.as_os_str());
+
+    let mut command = Command::new(executable);
+    command.args(&args);
+    command
 }
 
 pub fn format(
     partition: &Path,
-    fs: &str,
+    fs: FileSystem,
     label: Option<&str>,
-    badblocks: bool,
+    check_badblocks: bool,
 ) -> Result<(), USBMakerError> {
     let spinner: ProgressBar = ProgressBar::new_spinner();
     spinner.set_draw_target(ProgressDrawTarget::stderr());
@@ -66,51 +166,7 @@ pub fn format(
         }
     }
 
-    let mut command: Command = match (fs, label, badblocks) {
-        ("btrfs", None, _) => get_command!("mkfs.btrfs", partition.as_os_str()),
-        ("btrfs", Some(lbl), _) => get_command!("mkfs.btrfs", "-L", lbl, partition.as_os_str()),
-        ("exfat", None, _) => get_command!("mkfs.exfat", partition.as_os_str()),
-        ("exfat", Some(lbl), _) => get_command!("mkfs.exfat", "-n", lbl, partition.as_os_str()),
-        ("ext2", None, false) => get_command!("mkfs.ext2", partition.as_os_str()),
-        ("ext2", Some(lbl), false) => get_command!("mkfs.ext2", "-L", lbl, partition.as_os_str()),
-        ("ext2", None, true) => get_command!("mkfs.ext2", "-c", partition.as_os_str()),
-        ("ext2", Some(lbl), true) => {
-            get_command!("mkfs.ext2", "-c", "-L", lbl, partition.as_os_str())
-        }
-        ("ext3", None, false) => get_command!("mkfs.ext3", partition.as_os_str()),
-        ("ext3", Some(lbl), false) => get_command!("mkfs.ext3", "-L", lbl, partition.as_os_str()),
-        ("ext3", None, true) => get_command!("mkfs.ext3", "-c", partition.as_os_str()),
-        ("ext3", Some(lbl), true) => {
-            get_command!("mkfs.ext3", "-c", "-L", lbl, partition.as_os_str())
-        }
-        ("ext4", None, false) => get_command!("mkfs.ext4", partition.as_os_str()),
-        ("ext4", Some(lbl), false) => get_command!("mkfs.ext4", "-L", lbl, partition.as_os_str()),
-        ("ext4", None, true) => get_command!("mkfs.ext4", "-c", partition.as_os_str()),
-        ("ext4", Some(lbl), true) => {
-            get_command!("mkfs.ext4", "-c", "-L", lbl, partition.as_os_str())
-        }
-        ("f2fs", None, _) => get_command!("mkfs.f2fs", partition.as_os_str()),
-        ("f2fs", Some(lbl), _) => get_command!("mkfs.f2fs", "-l", lbl, partition.as_os_str()),
-        ("fat32", None, false) => get_command!("mkfs.fat", "-F32", partition.as_os_str()),
-        ("fat32", Some(lbl), false) => {
-            get_command!("mkfs.fat", "-F32", "-n", lbl, partition.as_os_str())
-        }
-        ("fat32", None, true) => get_command!("mkfs.fat", "-F32", "-c", partition.as_os_str()),
-        ("fat32", Some(lbl), true) => {
-            get_command!("mkfs.fat", "-F32", "-c", "-n", lbl, partition.as_os_str())
-        }
-        ("ntfs", None, false) => get_command!("mkfs.ntfs", "-Q", partition.as_os_str()),
-        ("ntfs", Some(lbl), false) => {
-            get_command!("mkfs.ntfs", "-Q", "-L", lbl, partition.as_os_str())
-        }
-        ("ntfs", None, true) => get_command!("mkfs.ntfs", partition.as_os_str()),
-        ("ntfs", Some(lbl), true) => get_command!("mkfs.ntfs", "-L", lbl, partition.as_os_str()),
-        ("udf", None, _) => get_command!("mkfs.udf", partition.as_os_str()),
-        ("udf", Some(lbl), _) => get_command!("mkfs.udf", "-l", lbl, partition.as_os_str()),
-        ("xfs", None, _) => get_command!("mkfs.xfs", partition.as_os_str()),
-        ("xfs", Some(lbl), _) => get_command!("mkfs.xfs", "-L", lbl, partition.as_os_str()),
-        _ => panic!("Unknown filesystem: {}", fs.to_owned()),
-    };
+    let mut command: Command = get_format_command(fs, partition, label, check_badblocks);
 
     match command.status() {
         Ok(status) => {
