@@ -21,7 +21,6 @@ use std::io;
 
 #[derive(Debug)]
 pub enum USBMakerError {
-    CanceledByUser,
     CommandFailed(Option<i32>, String),
     CommandLaunchFailed(io::Error, String),
     IoError(io::Error, String),
@@ -31,11 +30,10 @@ pub enum USBMakerError {
 impl USBMakerError {
     pub fn error_code(&self) -> i32 {
         match self {
-            USBMakerError::CanceledByUser => 1,
-            USBMakerError::CommandFailed(_, _) => 2,
-            USBMakerError::CommandLaunchFailed(_, _) => 3,
-            USBMakerError::IoError(_, _) => 4,
-            USBMakerError::PartitioningError(_, _) => 5,
+            USBMakerError::CommandFailed(_, _) => 1,
+            USBMakerError::CommandLaunchFailed(_, _) => 2,
+            USBMakerError::IoError(_, _) => 3,
+            USBMakerError::PartitioningError(_, _) => 4,
         }
     }
 }
@@ -43,7 +41,6 @@ impl USBMakerError {
 impl fmt::Display for USBMakerError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            USBMakerError::CanceledByUser => write!(f, "Canceled by user"),
             USBMakerError::CommandFailed(exit, c) => match exit {
                 Some(code) => write!(f, "{} exited with code {}", c, code),
                 None => write!(f, "{} was terminated by a signal", c),

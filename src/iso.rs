@@ -22,7 +22,6 @@ use crate::error::USBMakerError;
 use crate::formatting;
 use crate::mount::Mount;
 use crate::partitioning;
-use crate::tui;
 
 // TODO: bootloader install
 pub fn create_bootable(
@@ -32,18 +31,7 @@ pub fn create_bootable(
     table: &str,
     label: Option<&str>,
     badblocks: bool,
-    assume_yes: bool,
 ) -> Result<(), USBMakerError> {
-    if !assume_yes {
-        tui::warn(&*format!(
-            "This will wipe all data on {}.",
-            device.to_string_lossy()
-        ));
-        if !tui::prompt("Do you want to continue?", false) {
-            return Err(USBMakerError::CanceledByUser);
-        }
-    }
-
     let partition_path: PathBuf = partitioning::create_table(device, table, true, None)?;
 
     formatting::format(&partition_path, fs, badblocks, None, label)?;

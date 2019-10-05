@@ -21,8 +21,8 @@ mod formatting;
 mod iso;
 mod mount;
 mod partitioning;
-mod tui;
 
+use std::io::{self, Write};
 use std::path::PathBuf;
 use std::process;
 
@@ -55,6 +55,27 @@ struct Args {
 
 #[paw::main]
 fn main(args: Args) {
+    if !args.force_yes {
+        eprintln!("{}", Colour::Red.underline().paint(format!("This will wipe all data on {}.", args.device.display())));
+
+        let mut input: String = String::with_capacity(2);
+        loop {
+            eprint!("Do you want to continue? [Y/n] ");
+            let _ = io::stderr().flush();
+            if let Err(err) = io::stdin().read_line(&mut input) {
+                eprintln!("Error reading input: {}", err);
+                input.clear();
+                continue;
+            }
+
+            match input.to_lowercase().trim() {
+                "" | "y" | "yes" => break,
+                "n" | "no" => return,
+                _ => input.clear(),
+            }
+        }
+    }
+
     if let Err(err) = iso::create_bootable(
         &args.device,
         &args.iso,
@@ -62,7 +83,6 @@ fn main(args: Args) {
         &args.table,
         args.label.as_ref().map(|s| s.as_str()),
         args.badblocks,
-        args.force_yes,
     ) {
         eprintln!("{} {}", Colour::Red.bold().paint("Error:"), err);
         process::exit(err.error_code());
