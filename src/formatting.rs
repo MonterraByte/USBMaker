@@ -23,7 +23,6 @@ use libparted::FileSystemType;
 
 use crate::error::USBMakerError;
 use crate::partitioning;
-use crate::tui;
 
 pub fn format(
     path: &Path,
@@ -31,18 +30,7 @@ pub fn format(
     badblocks: bool,
     is_device: Option<&str>,
     label: Option<&str>,
-    assume_yes: bool,
 ) -> Result<(), USBMakerError> {
-    if !assume_yes {
-        tui::warn(&*format!(
-            "This will wipe all data on {}.",
-            path.to_string_lossy()
-        ));
-        if !tui::prompt("Do you want to continue?", false) {
-            return Err(USBMakerError::CanceledByUser);
-        }
-    }
-
     let partition: PathBuf = if is_device.is_some() {
         let fs_type: Option<FileSystemType> = match fs {
             "exfat" | "udf" => FileSystemType::get("ntfs"),
@@ -50,7 +38,7 @@ pub fn format(
             _ => FileSystemType::get(fs),
         };
 
-        partitioning::create_table(path, is_device.unwrap(), true, true, fs_type)?
+        partitioning::create_table(path, is_device.unwrap(), true, fs_type)?
     } else {
         path.to_path_buf()
     };

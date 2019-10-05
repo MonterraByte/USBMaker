@@ -44,9 +44,9 @@ pub fn create_bootable(
         }
     }
 
-    let partition_path: PathBuf = partitioning::create_table(device, table, true, true, None)?;
+    let partition_path: PathBuf = partitioning::create_table(device, table, true, None)?;
 
-    formatting::format(&partition_path, fs, badblocks, None, label, true)?;
+    formatting::format(&partition_path, fs, badblocks, None, label)?;
 
     let iso_mount: Mount = Mount::new(iso)?;
     let device_mount: Mount = Mount::new(device)?;

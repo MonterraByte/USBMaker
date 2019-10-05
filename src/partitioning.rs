@@ -22,26 +22,14 @@ use indicatif::{ProgressBar, ProgressDrawTarget};
 use libparted::{Constraint, Device, Disk, DiskType, FileSystemType, Partition, PartitionType};
 
 use crate::error::USBMakerError;
-use crate::tui;
 
 pub fn create_table(
     device_path: &Path,
     table_type_str: &str,
-    assume_yes: bool,
     partition: bool,
     fs_type: Option<FileSystemType>,
 ) -> Result<PathBuf, USBMakerError> {
     let table_type: DiskType = DiskType::get(table_type_str).expect("Unknown partition table");
-
-    if !assume_yes {
-        tui::warn(&*format!(
-            "This will wipe all data on {}.",
-            device_path.to_string_lossy()
-        ));
-        if !tui::prompt("Do you want to continue?", false) {
-            return Err(USBMakerError::CanceledByUser);
-        }
-    }
 
     let mut return_path: PathBuf = device_path.to_path_buf();
 
