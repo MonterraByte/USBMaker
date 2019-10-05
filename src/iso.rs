@@ -34,7 +34,7 @@ pub fn create_bootable(
 ) -> Result<(), USBMakerError> {
     let partition_path: PathBuf = partitioning::create_table(device, table, true, None)?;
 
-    formatting::format(&partition_path, fs, badblocks, None, label)?;
+    formatting::format(&partition_path, fs, label, badblocks)?;
 
     let iso_mount: Mount = Mount::new(iso)?;
     let device_mount: Mount = Mount::new(device)?;

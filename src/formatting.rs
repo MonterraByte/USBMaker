@@ -15,36 +15,12 @@
 //   You should have received a copy of the GNU General Public License
 //   along with USBMaker.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::process::Command;
 
 use indicatif::{ProgressBar, ProgressDrawTarget};
-use libparted::FileSystemType;
 
 use crate::error::USBMakerError;
-use crate::partitioning;
-
-pub fn format(
-    path: &Path,
-    fs: &str,
-    badblocks: bool,
-    is_device: Option<&str>,
-    label: Option<&str>,
-) -> Result<(), USBMakerError> {
-    let partition: PathBuf = if is_device.is_some() {
-        let fs_type: Option<FileSystemType> = match fs {
-            "exfat" | "udf" => FileSystemType::get("ntfs"),
-            "f2fs" => FileSystemType::get("ext4"),
-            _ => FileSystemType::get(fs),
-        };
-
-        partitioning::create_table(path, is_device.unwrap(), true, fs_type)?
-    } else {
-        path.to_path_buf()
-    };
-
-    create_filesystem(&partition, fs, label, badblocks)
-}
 
 macro_rules! get_command {
     ( $executable:expr, $( $arg:expr ),* ) => {
@@ -58,7 +34,7 @@ macro_rules! get_command {
     };
 }
 
-fn create_filesystem(
+pub fn format(
     partition: &Path,
     fs: &str,
     label: Option<&str>,
