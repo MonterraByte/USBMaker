@@ -248,9 +248,18 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
-    window = MainWindow()
+    app.setApplicationName('USBMaker')
+    app.setApplicationVersion('2.0.0')
 
+    parser = QtCore.QCommandLineParser()
+    parser.setApplicationDescription('Create bootable usb drives')
+    parser.addHelpOption()
+    parser.addVersionOption()
+    parser.process(app)
+
+    window = MainWindow()
     window.show()
+
     sys.exit(app.exec_())
 
 
