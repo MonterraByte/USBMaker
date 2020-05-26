@@ -83,7 +83,7 @@ fn main(args: Args) {
         &args.iso,
         args.filesystem,
         &args.table,
-        args.label.as_ref().map(|s| s.as_str()),
+        args.label.as_deref(),
         args.badblocks,
     ) {
         eprintln!("{} {}", Colour::Red.bold().paint("Error:"), err);
