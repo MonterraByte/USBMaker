@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#   Copyright © 2017-2019 Joaquim Monteiro
+#   Copyright © 2017-2020 Joaquim Monteiro
 #
 #   This file is part of USBMaker.
 #

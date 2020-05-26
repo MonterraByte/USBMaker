@@ -47,7 +47,7 @@ class Ui_About(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.label_copyright.sizePolicy().hasHeightForWidth())
         self.label_copyright.setSizePolicy(sizePolicy)
-        self.label_copyright.setText("Copyright © 2017-2019 Joaquim Monteiro")
+        self.label_copyright.setText("Copyright © 2017-2020 Joaquim Monteiro")
         self.label_copyright.setAlignment(QtCore.Qt.AlignBottom|QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft)
         self.label_copyright.setObjectName("label_copyright")
         self.verticalLayout.addWidget(self.label_copyright)

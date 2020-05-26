@@ -71,7 +71,7 @@
       </sizepolicy>
      </property>
      <property name="text">
-      <string notr="true">Copyright © 2017-2019 Joaquim Monteiro</string>
+      <string notr="true">Copyright © 2017-2020 Joaquim Monteiro</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
