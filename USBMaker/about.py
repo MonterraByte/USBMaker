@@ -16,8 +16,9 @@
 #   along with USBMaker.  If not, see <https://www.gnu.org/licenses/>.
 
 from PyQt5 import QtWidgets, QtGui
-from about_ui import Ui_About
-from license_ui import Ui_License
+
+from .about_ui import Ui_About
+from .license_ui import Ui_License
 
 
 class About(QtWidgets.QWidget, Ui_About):

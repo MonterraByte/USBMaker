@@ -16,15 +16,17 @@
 #   You should have received a copy of the GNU General Public License
 #   along with USBMaker.  If not, see <https://www.gnu.org/licenses/>.
 
-import sys
 import os
 import re
-import subprocess
 import shutil
+import subprocess
+import sys
+
 from PyQt5 import QtWidgets, QtCore, QtGui
-from gui import Ui_MainWindow
-import about
-import usb_info
+
+from .about import About
+from .gui import Ui_MainWindow
+from .usb_info import get_id_list, get_size
 
 
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
@@ -36,7 +38,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if QtGui.QIcon.hasThemeIcon('usbmaker'):
             self.setWindowIcon(QtGui.QIcon.fromTheme('usbmaker'))
 
-        self.about_window = about.About()
+        self.about_window = About()
 
         # Here we set up the gui elements that aren't modified
         # elsewhere in the code.
@@ -208,11 +210,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         messagebox.move(x, y)
 
     def refresh_device_list(self):
-        self.device_id_list = usb_info.get_id_list()
+        self.device_id_list = get_id_list()
         self.comboBox_device.clear()
         for device in self.device_id_list:
-            self.comboBox_device.addItem('(' + str(round(usb_info.get_size(
-                usb_info.get_block_device_name(device))/1073741824, 1)) + 'GiB) ' + device)
+            self.comboBox_device.addItem('(' + str(round(get_size(device)/1073741824, 1)) + 'GiB) '
+                                         + device[4:])
 
     def get_file_name(self):
         # getOpenFileName returns a tuple with the file path and the filter,
@@ -244,8 +246,13 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.lineEdit_label.setText(default_label)
 
 
-app = QtWidgets.QApplication(sys.argv)
-window = MainWindow()
+def main():
+    app = QtWidgets.QApplication(sys.argv)
+    window = MainWindow()
 
-window.show()
-sys.exit(app.exec_())
+    window.show()
+    sys.exit(app.exec_())
+
+
+if __name__ == '__main__':
+    main()
