@@ -27,36 +27,37 @@ use std::path::PathBuf;
 use std::process;
 
 use ansi_term::Colour;
-use structopt::StructOpt;
+use clap::Clap;
 
 use crate::formatting::FileSystem;
 
-#[derive(StructOpt, Debug)]
-#[structopt(about, author)]
+#[derive(Clap, Debug)]
+#[clap(about, author, version)]
 struct Args {
     /// Path to the ISO file
     iso: PathBuf,
     /// Path to the device file
     device: PathBuf,
     /// Check for bad blocks while formatting
-    #[structopt(short, long)]
+    #[clap(short, long)]
     badblocks: bool,
     /// Filesystem used to format the device
-    #[structopt(short, long, possible_values = &["btrfs", "exfat", "ext2", "ext3", "ext4", "f2fs", "fat32", "ntfs", "udf", "xfs"], default_value = "fat32")]
+    #[clap(short, long, possible_values = &["btrfs", "exfat", "ext2", "ext3", "ext4", "f2fs", "fat32", "ntfs", "udf", "xfs"], default_value = "fat32")]
     filesystem: FileSystem,
     /// Partition table used on the device
-    #[structopt(short, long, possible_values = &["gpt", "msdos"], default_value = "msdos")]
+    #[clap(short, long, possible_values = &["gpt", "msdos"], default_value = "msdos")]
     table: String,
     /// Label to give to the filesystem (to use the default, don't pass this option)
-    #[structopt(short, long)]
+    #[clap(short, long)]
     label: Option<String>,
     /// Do not prompt for confirmation
-    #[structopt(short = "y", long = "yes")]
+    #[clap(short = "y", long = "yes")]
     force_yes: bool,
 }
 
-#[paw::main]
-fn main(args: Args) {
+fn main() {
+    let args = Args::parse();
+
     if !args.force_yes {
         eprintln!("{}", Colour::Red.underline().paint(format!("This will wipe all data on {}.", args.device.display())));
 
